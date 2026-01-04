@@ -1,0 +1,262 @@
+.brands-page {
+  background-color: black;
+  color: white;
+}
+
+.brands-section {
+  padding: 80px 20px;
+  text-align: center;
+}
+
+.brands-title {
+  font-size: 3rem;
+  margin-bottom: 50px;
+  color: white;
+  position: relative;
+  display: inline-block;
+  letter-spacing: 1px;
+}
+
+.brands-title::after {
+  content: '';
+  width: 150px;
+  height: 4px;
+  background-color: gold;
+  position: absolute;
+  bottom: -15px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+}
+
+.brands-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.brands-box {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.brand-item {
+  background-color: #1e1e1e;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(255, 215, 0, 0.1);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+  position: relative;
+}
+
+.brand-image-wrapper {
+  overflow: hidden;
+  border-radius: 15px;
+}
+
+.brand-image-wrapper img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.brand-item:hover .brand-image-wrapper img {
+  transform: scale(1.1);
+}
+
+.brand-item:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 12px 30px rgba(255, 215, 0, 0.3);
+}
+
+.brand-label {
+  padding: 15px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: gold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: rgba(0, 0, 0, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 1024px) {
+  .brands-title {
+    font-size: 2.5rem;
+  }
+
+  .brand-image-wrapper img {
+    height: 180px;
+  }
+}
+
+@media (max-width: 768px) {
+  .brands-title {
+    font-size: 2rem;
+  }
+
+  .brand-image-wrapper img {
+    height: 160px;
+  }
+}
+
+@media (max-width: 500px) {
+  .brands-title {
+    font-size: 1.6rem;
+  }
+
+  .brand-image-wrapper img {
+    height: 140px;
+  }
+
+  .brand-label {
+    font-size: 1rem;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.womens-brands-section {
+  padding: 100px 20px;
+  text-align: center;
+  background-color: #0b0b0b;
+  color: white;
+}
+
+.womens-brands-title {
+  font-size: 3.2rem;
+  margin-bottom: 60px;
+  position: relative;
+  display: inline-block;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  font-weight: bold;
+  color: #fff;
+}
+
+.womens-brands-title::after {
+  content: '';
+  width: 180px;
+  height: 5px;
+  background-color: gold;
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 3px;
+}
+
+.womens-brands-container {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.womens-brands-box {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 30px;
+}
+
+.womens-brand-item {
+  background-color: #1a1a1a;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(255, 215, 0, 0.1);
+  transition: transform 0.5s ease, box-shadow 0.5s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.womens-brand-image-wrapper {
+  overflow: hidden;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+}
+
+.womens-brand-image-wrapper img {
+  width: 100%;
+  height: fit-content;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.womens-brand-item:hover .womens-brand-image-wrapper img {
+  transform: scale(1.15) rotate(3deg);
+}
+
+.womens-brand-item:hover {
+  transform: translateY(-15px);
+  box-shadow: 0 15px 40px rgba(255, 215, 0, 0.3);
+}
+
+.womens-brand-label {
+  padding: 18px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: gold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background-color: #111;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 1200px) {
+  .womens-brands-title {
+    font-size: 2.8rem;
+  }
+
+  .womens-brand-image-wrapper img {
+    height: 220px;
+  }
+}
+
+@media (max-width: 900px) {
+  .womens-brands-title {
+    font-size: 2.4rem;
+  }
+
+  .womens-brand-image-wrapper img {
+    height: 200px;
+  }
+}
+
+@media (max-width: 600px) {
+  .womens-brands-title {
+    font-size: 2rem;
+  }
+
+  .womens-brand-image-wrapper img {
+    height: 180px;
+  }
+
+  .womens-brand-label {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 400px) {
+  .womens-brands-title {
+    font-size: 1.6rem;
+  }
+
+  .womens-brand-image-wrapper img {
+    height: 160px;
+  }
+}

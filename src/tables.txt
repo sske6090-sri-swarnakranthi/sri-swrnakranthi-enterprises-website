@@ -1,0 +1,83 @@
+CREATE TABLE tarasproducts (
+    id SERIAL PRIMARY KEY,
+    category VARCHAR(255) NOT NULL,
+    brand VARCHAR(255) NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    color VARCHAR(50),
+    size VARCHAR(20),
+    original_price_b2b DECIMAL(10, 2) NOT NULL,
+    discount_b2b DECIMAL(5, 2) NOT NULL,
+    final_price_b2b DECIMAL(10, 2) NOT NULL,
+    original_price_b2c DECIMAL(10, 2) NOT NULL,
+    discount_b2c DECIMAL(5, 2) NOT NULL,
+    final_price_b2c DECIMAL(10, 2) NOT NULL,
+    total_count INT NOT NULL,
+    image_url VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+
+
+
+
+CREATE TABLE userstaras (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    mobile VARCHAR(15) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    type VARCHAR(10) NOT NULL CHECK (type IN ('B2B', 'B2C')),  
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    otp VARCHAR(6),
+    otp_expiry TIMESTAMP 
+);
+
+
+
+
+
+
+
+
+CREATE TABLE taraswishlist (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES userstaras(id) ON DELETE CASCADE,
+    product_id INT REFERENCES tarasproducts(id) ON DELETE CASCADE,
+    UNIQUE(user_id, product_id)  
+);
+
+
+
+
+
+
+
+
+CREATE TABLE tarascart (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES userstaras(id) ON DELETE CASCADE,
+    product_id INT REFERENCES tarasproducts(id) ON DELETE CASCADE,
+    selected_size VARCHAR(20),
+    selected_color VARCHAR(50),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+
+
+
+
+
+
+
+CREATE TABLE tarasorders (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES userstaras(id) ON DELETE CASCADE,
+    product_ids INT[] NOT NULL, 
+    total_price DECIMAL(10, 2) NOT NULL,
+    status VARCHAR(50) NOT NULL CHECK (status IN ('pending', 'completed', 'cancelled', 'shipped')),  
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

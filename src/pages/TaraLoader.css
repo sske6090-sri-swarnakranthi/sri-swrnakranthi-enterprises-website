@@ -1,0 +1,34 @@
+/* TaraLoader.css */
+.tara-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(5px);
+}
+
+.tara-video {
+  width: min(220px, 50vw);
+  height: auto;
+  border-radius: 16px;
+  outline: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 18px 60px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .tara-video {
+    width: min(200px, 60vw);
+  }
+}
+
+@media (max-width: 420px) {
+  .tara-video {
+    width: min(170px, 70vw);
+  }
+}

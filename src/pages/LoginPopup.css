@@ -1,0 +1,281 @@
+/* D:\gifts-website\src\pages\LoginPopup.css */
+
+:root {
+  --blue: #2f80ff;
+  --blue2: #005eff;
+  --glass: rgba(255, 255, 255, 0.06);
+  --glass2: rgba(255, 255, 255, 0.09);
+  --border: rgba(255, 255, 255, 0.14);
+  --muted: rgba(255, 255, 255, 0.8);
+}
+
+.popup-overlay-login {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.78);
+  backdrop-filter: blur(6px);
+}
+
+.form-container-login {
+  position: relative;
+  width: min(430px, 92vw);
+  border-radius: 18px;
+  background: rgba(0, 0, 0, 0.92);
+  color: #fff;
+  padding: 22px 20px 18px;
+  border: 1px solid rgba(47, 128, 255, 0.55);
+  box-shadow: 0 30px 120px rgba(0, 0, 0, 0.65),
+    0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 0 24px rgba(47, 128, 255, 0.14);
+}
+
+.close-login {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.close-login:hover {
+  transform: scale(1.05);
+  background: rgba(47, 128, 255, 0.12);
+}
+
+.head-login {
+  text-align: center;
+  padding: 6px 8px 10px;
+}
+
+.title-login {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 0.4px;
+  background: linear-gradient(90deg, var(--blue), #ffffff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 18px rgba(47, 128, 255, 0.18);
+}
+
+.sub-login {
+  margin: 6px 0 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
+}
+
+.form-login {
+  margin-top: 12px;
+  display: grid;
+  gap: 12px;
+}
+
+.input-wrap-login {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: rgba(15, 15, 15, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  transition: border-color 0.18s ease, box-shadow 0.2s ease;
+}
+
+.input-wrap-login:focus-within {
+  border-color: rgba(47, 128, 255, 0.75);
+  box-shadow: 0 12px 26px rgba(47, 128, 255, 0.10),
+    inset 0 0 0 1px rgba(47, 128, 255, 0.24);
+}
+
+.input-wrap-login.has-error {
+  border-color: #cc3333;
+}
+
+.i-login {
+  color: var(--blue);
+  font-size: 18px;
+}
+
+.input-wrap-login input {
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+}
+
+.eye-login {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 18px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.eye-login:hover {
+  transform: scale(1.08);
+}
+
+.row-login {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -2px;
+}
+
+.forgot-login-btn {
+  background: transparent;
+  border: none;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.18s ease;
+}
+
+.forgot-login-btn:hover {
+  opacity: 0.9;
+  text-decoration: underline;
+}
+
+.sign-login {
+  width: 100%;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  background: linear-gradient(90deg, var(--blue2), var(--blue));
+  color: #fff;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  box-shadow: 0 16px 40px rgba(47, 128, 255, 0.22),
+    inset 0 0 0 1px rgba(0, 0, 0, 0.18);
+  transition: transform 0.15s ease, filter 0.2s ease;
+}
+
+.sign-login:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+.sign-login.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.spinner-login {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.28);
+  border-top-color: #fff;
+  display: inline-block;
+  animation: spin 0.8s linear infinite;
+}
+
+.popup-msg-login {
+  margin-top: 12px;
+  text-align: center;
+  padding: 10px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.popup-msg-login.ok {
+  background: rgba(0, 180, 120, 0.16);
+  color: #d2ffe6;
+  border: 1px solid rgba(0, 180, 120, 0.35);
+}
+
+.popup-msg-login.err {
+  background: rgba(204, 51, 51, 0.15);
+  color: #ff9b9b;
+  border: 1px solid rgba(204, 51, 51, 0.35);
+}
+
+.social-message-login {
+  display: flex;
+  align-items: center;
+  padding-top: 12px;
+}
+
+.line-login {
+  height: 1px;
+  flex: 1;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.message-login {
+  padding: 0 12px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.social-grid-login {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.btn-google-login {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  height: 42px;
+  border: 1px solid rgba(47, 128, 255, 0.45);
+  background: rgba(255, 255, 255, 0.04);
+  color: #cfe1ff;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+  padding: 0 14px;
+  transition: transform 0.15s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.btn-google-login:hover {
+  transform: translateY(-1px);
+  background: rgba(47, 128, 255, 0.12);
+  border-color: rgba(47, 128, 255, 0.65);
+}
+
+.signup-login {
+  text-align: center;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.signup-link-login {
+  color: var(--blue);
+  font-weight: 900;
+  background: transparent;
+  border: none;
+  padding: 0 0 0 4px;
+  cursor: pointer;
+}
+
+.signup-link-login:hover {
+  text-decoration: underline;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

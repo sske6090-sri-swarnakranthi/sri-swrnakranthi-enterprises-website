@@ -1,0 +1,25 @@
+razorpay ki links
+
+
+
+Shipping
+
+https://merchant.razorpay.com/policy/RYmfT0IFIA9UC6/shipping
+
+Terms and Conditions
+
+https://merchant.razorpay.com/policy/RYmfT0IFIA9UC6/terms
+
+Cancellation & Refunds
+
+https://merchant.razorpay.com/policy/RYmfT0IFIA9UC6/refund
+
+
+
+
+
+
+
+
+live api key : rzp_live_RYxNe49jjzQUJR
+live api secret : BbTevk7uVAfa4NAKHo1QW8MK

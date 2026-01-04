@@ -1,0 +1,335 @@
+.men-page {}
+
+.men-page-main {
+  display: flex;
+  width: 100%;
+}
+
+.filter-sidebar {
+  width: 14%;
+  padding: 20px;
+}
+
+.men-page-content {
+  width: 100%;
+}
+
+.men-page {
+  position: relative;
+  overflow: visible;
+}
+
+.mens-section1 {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.mens-section1-bg {
+  position: relative;
+  width: 100%;
+  height: auto;
+}
+
+.mens-section1-bg img {
+  width: 100%;
+  height: 540px;
+  object-fit: cover;
+  font-weight: 200;
+  display: block;
+}
+
+.mens-section1-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4));
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding-left: 60px;
+}
+
+.mens-section1-text h1 {
+  margin: 0;
+  font-family: "Noto Sans", sans-serif;
+  color: gold;
+  font-size: 90px;
+  line-height: 1.2;
+  text-align: left;
+}
+
+@media (max-width: 1024px) {
+  .mens-section1-text h1 {
+    font-size: 3.5rem;
+  }
+
+  .mens-section1-overlay {
+    padding-left: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .mens-section1-text h1 {
+    font-size: 2.5rem;
+  }
+
+  .mens-section1-overlay {
+    padding-left: 30px;
+  }
+}
+
+@media (max-width: 500px) {
+  .mens-section1-text h1 {
+    font-size: 60px;
+  }
+
+  .mens-section1-bg img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    font-weight: 200;
+    display: block;
+  }
+
+  .mens-section1-overlay {
+    padding-left: 10px;
+  }
+}
+
+@media (max-width: 400px) {
+  .mens-section1-text h1 {
+    font-size: 1.6rem;
+  }
+
+  .mens-section1-overlay {
+    padding-left: 15px;
+  }
+}
+
+.mens-section2 {
+  margin-top: 100px;
+  margin-bottom: 80px;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.mens-section2-bg {
+  position: relative;
+  width: 100%;
+  height: auto;
+}
+
+.mens-section2-bg img {
+  width: 100%;
+  height: 100vh;
+  object-fit: cover;
+  display: block;
+}
+
+.mens-section2-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 60px;
+}
+
+.mens-section2-text h1 {
+  color: #253494;
+  font-size: 60px;
+  margin: 0;
+  line-height: 1.2;
+  text-align: left;
+}
+
+@media (max-width: 1024px) {
+  .mens-section2-text h1 {
+    font-size: 3.5rem;
+  }
+
+  .mens-section2-overlay {
+    padding-left: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .mens-section2-text h1 {
+    font-size: 2.5rem;
+  }
+
+  .mens-section2-overlay {
+    padding-left: 30px;
+  }
+}
+
+@media (max-width: 500px) {
+  .mens-section2-text h1 {
+    font-size: 2rem;
+  }
+
+  .mens-section2-bg img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .mens-section2-overlay {
+    padding-left: 20px;
+  }
+}
+
+@media (max-width: 400px) {
+  .mens-section2-text h1 {
+    font-size: 1.6rem;
+  }
+
+  .mens-section2-overlay {
+    padding-left: 15px;
+  }
+}
+
+.mens-section3 {
+  display: flex;
+  width: 96%;
+  height: auto;
+  color: white;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-left: 30px;
+}
+
+.mens-section3-left,
+.mens-section3-right {
+  width: 39%;
+}
+
+.mens-section3-left img,
+.mens-section3-right img {
+  width: 100%;
+  height: 550px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.mens-section3-center {
+  width: 20%;
+  text-align: center;
+}
+
+.mens-section3-center h2 {
+  font-size: 40px;
+  margin-bottom: 20px;
+  color: #253494;
+}
+
+.mens-section3-discount {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.mens-section3-discount .line {
+  width: 170px;
+  height: 3px;
+  background-color: gold;
+  margin: 8px 0;
+}
+
+.mens-section3-discount h1 {
+  font-size: 2.5rem;
+  color: #253494;
+  margin: 0;
+}
+
+.mens-section3-center h3 {
+  font-size: 40px;
+  margin-top: 20px;
+  color: #253494;
+}
+
+@media (max-width: 1024px) {
+  .mens-section3-center h2 {
+    font-size: 1.6rem;
+  }
+
+  .mens-section3-discount h1 {
+    font-size: 2.2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .mens-section3 {
+    flex-direction: column;
+    padding: 30px 15px;
+  }
+
+  .mens-section3-left,
+  .mens-section3-right,
+  .mens-section3-center {
+    width: 100%;
+  }
+
+  .mens-section3-center {
+    margin: 20px 0;
+  }
+}
+
+@media (max-width: 500px) {
+  .mens-section3-center h2 {
+    font-size: 1.4rem;
+  }
+
+  .mens-section3-left,
+  .mens-section3-right {
+    width: 90%;
+    margin: 0 auto;
+  }
+
+  .mens-section3-discount h1 {
+    font-size: 2rem;
+  }
+
+  .mens-section3-center h3 {
+    font-size: 1rem;
+  }
+
+  .mens-section3 {
+    margin-top: 100px;
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    color: white;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin: 0 auto;
+  }
+
+  .mens-section3-left img,
+  .mens-section3-right img {
+    width: 100%;
+    height: 450px;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+}
+
+@media (max-width: 400px) {
+  .mens-section3-center h2 {
+    font-size: 1.2rem;
+  }
+
+  .mens-section3-discount h1 {
+    font-size: 1.8rem;
+  }
+}

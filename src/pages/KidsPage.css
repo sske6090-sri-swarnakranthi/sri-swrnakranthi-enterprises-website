@@ -1,0 +1,331 @@
+.kids-page-main {
+  display: flex;
+  width: 100%;
+}
+
+.filter-sidebar {
+  width: 14%;
+  padding: 20px;
+}
+
+.kids-page-content {
+  width: 100%;
+}
+
+.kids-page {
+  position: relative;
+  overflow: visible;
+}
+
+.kids-section1 {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.kids-section1-bg {
+  position: relative;
+  width: 100%;
+  height: auto;
+}
+
+.kids-section1-bg img {
+  width: 100%;
+  height: 540px;
+  object-fit: cover;
+  font-weight: 200;
+  display: block;
+}
+
+.kids-section1-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4));
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding-left: 60px;
+}
+
+.kids-section1-text h1 {
+  font-family: "Noto Sans", sans-serif;
+  color: gold;
+  font-size: 90px;
+  margin: 0;
+  line-height: 1.2;
+  text-align: left;
+}
+
+@media (max-width: 1024px) {
+  .kids-section1-text h1 {
+    font-size: 3.5rem;
+  }
+
+  .kids-section1-overlay {
+    padding-left: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .kids-section1-text h1 {
+    font-size: 2.5rem;
+  }
+
+  .kids-section1-overlay {
+    padding-left: 30px;
+  }
+}
+
+@media (max-width: 500px) {
+  .kids-section1-text h1 {
+    font-size: 60px;
+  }
+
+  .kids-section1-bg img {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    font-weight: 200;
+    display: block;
+  }
+
+  .kids-section1-overlay {
+    padding-left: 10px;
+  }
+}
+
+@media (max-width: 400px) {
+  .kids-section1-text h1 {
+    font-size: 1.6rem;
+  }
+
+  .kids-section1-overlay {
+    padding-left: 15px;
+  }
+}
+
+.kids-section2 {
+  margin-top: 100px;
+  margin-bottom: 80px;
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+}
+
+.kids-section2-bg {
+  position: relative;
+  width: 100%;
+  height: auto;
+}
+
+.kids-section2-bg img {
+  width: 100%;
+  height: 100vh;
+  object-fit: cover;
+  display: block;
+}
+
+.kids-section2-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 60px;
+}
+
+.kids-section2-text h1 {
+  color: #253494;
+  font-size: 60px;
+  margin: 0;
+  line-height: 1.2;
+  text-align: left;
+}
+
+@media (max-width: 1024px) {
+  .kids-section2-text h1 {
+    font-size: 3.5rem;
+  }
+
+  .kids-section2-overlay {
+    padding-left: 40px;
+  }
+}
+
+@media (max-width: 768px) {
+  .kids-section2-text h1 {
+    font-size: 2.5rem;
+  }
+
+  .kids-section2-overlay {
+    padding-left: 30px;
+  }
+}
+
+@media (max-width: 500px) {
+  .kids-section2-text h1 {
+    font-size: 2rem;
+  }
+
+  .kids-section2-bg img {
+    width: 100%;
+    height: 400px;
+  }
+
+  .kids-section2-overlay {
+    padding-left: 20px;
+  }
+}
+
+@media (max-width: 400px) {
+  .kids-section2-text h1 {
+    font-size: 1.6rem;
+  }
+
+  .kids-section2-overlay {
+    padding-left: 15px;
+  }
+}
+
+.kids-section3 {
+  display: flex;
+  width: 96%;
+  height: auto;
+  color: white;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-left: 30px;
+}
+
+.kids-section3-left,
+.kids-section3-right {
+  width: 39%;
+}
+
+.kids-section3-left img,
+.kids-section3-right img {
+  width: 100%;
+  height: 550px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.kids-section3-center {
+  width: 20%;
+  text-align: center;
+}
+
+.kids-section3-center h2 {
+  font-size: 40px;
+  margin-bottom: 20px;
+  color: #253494;
+}
+
+.kids-section3-discount {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.kids-section3-discount .line {
+  width: 170px;
+  height: 3px;
+  background-color: gold;
+  margin: 8px 0;
+}
+
+.kids-section3-discount h1 {
+  font-size: 2.5rem;
+  color: #253494;
+  margin: 0;
+}
+
+.kids-section3-center h3 {
+  font-size: 40px;
+  margin-top: 20px;
+  color: #253494;
+}
+
+@media (max-width: 1024px) {
+  .kids-section3-center h2 {
+    font-size: 1.6rem;
+  }
+
+  .kids-section3-discount h1 {
+    font-size: 2.2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .kids-section3 {
+    flex-direction: column;
+    padding: 30px 15px;
+  }
+
+  .kids-section3-left,
+  .kids-section3-right,
+  .kids-section3-center {
+    width: 100%;
+  }
+
+  .kids-section3-center {
+    margin: 20px 0;
+  }
+}
+
+@media (max-width: 500px) {
+  .kids-section3-center h2 {
+    font-size: 1.4rem;
+  }
+
+  .kids-section3-left,
+  .kids-section3-right {
+    width: 90%;
+    margin: 0 auto;
+    margin-left: 10px;
+  }
+
+  .kids-section3-discount h1 {
+    font-size: 2rem;
+  }
+
+  .kids-section3-center h3 {
+    font-size: 1rem;
+  }
+
+  .kids-section3 {
+    margin-top: 100px;
+    display: flex;
+    width: 100%;
+    height: auto;
+    color: white;
+    align-items: left;
+    justify-content: space-between;
+    gap: 0;
+  }
+
+  .kids-section3-left img,
+  .kids-section3-right img {
+    width: 100%;
+    height: 550px;
+    border-radius: 10px;
+    object-fit: cover;
+  }
+}
+
+@media (max-width: 400px) {
+  .kids-section3-center h2 {
+    font-size: 1.2rem;
+  }
+
+  .kids-section3-discount h1 {
+    font-size: 1.8rem;
+  }
+}
