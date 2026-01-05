@@ -22,7 +22,29 @@ const PRODUCTS = [
   { id: "id_cards", title: "ID Cards", variants: [getPublicImg("printing4.jpg")] },
 ];
 
-const defaultSettings = { offsetX: 0, offsetY: 0, scale: 1, rotate: 0, opacity: 1 };
+const defaultSettings = {
+  offsetX: 0,
+  offsetY: 0,
+  scale: 1,
+  rotate: 0,
+  opacity: 1,
+  flipX: false,
+  flipY: false,
+  blendMode: "source-over",
+  shadow: 0,
+  border: 0,
+  borderColor: "#ffffff",
+  radius: 0,
+  blur: 0,
+  hue: 0,
+  saturate: 100,
+  brightness: 100,
+  contrast: 100,
+  snapCenter: false,
+  showGrid: false,
+  showSafeArea: true,
+  fineStep: 1,
+};
 
 function removeWhiteBgToTransparent(srcDataUrl, threshold = 245) {
   return new Promise((resolve, reject) => {
@@ -77,13 +99,7 @@ export default function CustomizationPage() {
   try {
     if (savedSettingsRaw) {
       const parsed = JSON.parse(savedSettingsRaw);
-      initialSettings = {
-        offsetX: Number.isFinite(Number(parsed.offsetX)) ? Number(parsed.offsetX) : defaultSettings.offsetX,
-        offsetY: Number.isFinite(Number(parsed.offsetY)) ? Number(parsed.offsetY) : defaultSettings.offsetY,
-        scale: Number.isFinite(Number(parsed.scale)) ? Number(parsed.scale) : defaultSettings.scale,
-        rotate: Number.isFinite(Number(parsed.rotate)) ? Number(parsed.rotate) : defaultSettings.rotate,
-        opacity: Number.isFinite(Number(parsed.opacity)) ? Number(parsed.opacity) : defaultSettings.opacity,
-      };
+      initialSettings = { ...defaultSettings, ...parsed };
     }
   } catch {
     initialSettings = defaultSettings;
@@ -109,24 +125,45 @@ export default function CustomizationPage() {
   const containerRef = useRef(null);
   const baseImgRef = useRef(null);
   const overlayImgRef = useRef(null);
-  const drawStateRef = useRef({ baseRect: { x: 0, y: 0, w: 0, h: 0 }, overlayRect: { x: 0, y: 0, w: 0, h: 0 } });
+  const drawStateRef = useRef({
+    baseRect: { x: 0, y: 0, w: 0, h: 0 },
+    overlayRect: { x: 0, y: 0, w: 0, h: 0 },
+    overlayMeta: { w: 0, h: 0, cx: 0, cy: 0 },
+  });
   const dragRef = useRef({ dragging: false, lastX: 0, lastY: 0 });
 
   useEffect(() => {
-    localStorage.setItem(LS_KEYS.product, selectedProductId);
-  }, [selectedProductId]);
+    const blockContext = (e) => {
+      e.preventDefault();
+      return false;
+    };
 
-  useEffect(() => {
-    localStorage.setItem(LS_KEYS.variant, String(selectedVariantIndex));
-  }, [selectedVariantIndex]);
+    const onKeyDown = (e) => {
+      const key = e.key?.toLowerCase?.() || "";
+      const isPrintScreen = key === "printscreen";
+      const isCtrlP = (e.ctrlKey || e.metaKey) && key === "p";
+      const isCtrlS = (e.ctrlKey || e.metaKey) && key === "s";
+      const isDevTools = (e.ctrlKey && e.shiftKey && ["i", "j", "c"].includes(key)) || key === "f12";
+      if (isPrintScreen || isCtrlP || isCtrlS || isDevTools) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+    };
 
-  useEffect(() => {
-    localStorage.setItem(LS_KEYS.overlay, overlayDataUrl || "");
-  }, [overlayDataUrl]);
+    document.addEventListener("contextmenu", blockContext);
+    window.addEventListener("keydown", onKeyDown);
 
-  useEffect(() => {
-    localStorage.setItem(LS_KEYS.settings, JSON.stringify(settings));
-  }, [settings]);
+    return () => {
+      document.removeEventListener("contextmenu", blockContext);
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
+
+  useEffect(() => localStorage.setItem(LS_KEYS.product, selectedProductId), [selectedProductId]);
+  useEffect(() => localStorage.setItem(LS_KEYS.variant, String(selectedVariantIndex)), [selectedVariantIndex]);
+  useEffect(() => localStorage.setItem(LS_KEYS.overlay, overlayDataUrl || ""), [overlayDataUrl]);
+  useEffect(() => localStorage.setItem(LS_KEYS.settings, JSON.stringify(settings)), [settings]);
 
   useEffect(() => {
     const base = new Image();
@@ -161,9 +198,7 @@ export default function CustomizationPage() {
     };
   }, [overlayDataUrl]);
 
-  useEffect(() => {
-    redraw();
-  }, [settings]);
+  useEffect(() => redraw(), [settings]);
 
   useEffect(() => {
     if (!containerRef.current || !canvasRef.current) return;
@@ -171,11 +206,12 @@ export default function CustomizationPage() {
     const ro = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry) return;
-      const w = Math.max(280, Math.floor(entry.contentRect.width));
-      const h = Math.max(280, Math.floor(entry.contentRect.height));
+      const w = Math.max(300, Math.floor(entry.contentRect.width));
+      const h = Math.max(340, Math.floor(entry.contentRect.height));
       const canvas = canvasRef.current;
-      canvas.width = w * (window.devicePixelRatio || 1);
-      canvas.height = h * (window.devicePixelRatio || 1);
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
       redraw();
@@ -195,6 +231,42 @@ export default function CustomizationPage() {
     const x = (cw - w) / 2;
     const y = (ch - h) / 2;
     return { x, y, w, h };
+  };
+
+  const drawGrid = (ctx, baseRect) => {
+    const { x, y, w, h } = baseRect;
+    ctx.save();
+    ctx.globalAlpha = 0.14;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1;
+    const cols = 6;
+    const rows = 6;
+    for (let i = 1; i < cols; i++) {
+      const gx = x + (w * i) / cols;
+      ctx.beginPath();
+      ctx.moveTo(gx, y);
+      ctx.lineTo(gx, y + h);
+      ctx.stroke();
+    }
+    for (let i = 1; i < rows; i++) {
+      const gy = y + (h * i) / rows;
+      ctx.beginPath();
+      ctx.moveTo(x, gy);
+      ctx.lineTo(x + w, gy);
+      ctx.stroke();
+    }
+    ctx.restore();
+  };
+
+  const drawSafeArea = (ctx, baseRect) => {
+    const { x, y, w, h } = baseRect;
+    ctx.save();
+    ctx.globalAlpha = 0.2;
+    ctx.strokeStyle = "#1e6bff";
+    ctx.lineWidth = 2;
+    const pad = Math.min(w, h) * 0.08;
+    ctx.strokeRect(x + pad, y + pad, w - pad * 2, h - pad * 2);
+    ctx.restore();
   };
 
   const redraw = () => {
@@ -219,16 +291,27 @@ export default function CustomizationPage() {
     if (baseImg) {
       ctx.drawImage(baseImg, baseRect.x, baseRect.y, baseRect.w, baseRect.h);
     } else {
-      ctx.fillStyle = "#000000";
+      ctx.fillStyle = "#0a0a0a";
       ctx.fillRect(0, 0, cw, ch);
       ctx.fillStyle = "#ffffff";
-      ctx.font = "600 16px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
       ctx.fillText("Preview unavailable", 16, 28);
     }
 
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = "#ffffff";
+    ctx.font = "600 26px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.rotate((-10 * Math.PI) / 180);
+    ctx.fillText("PREVIEW ONLY", -10, ch * 0.65);
+    ctx.restore();
+
+    if (settings.showGrid) drawGrid(ctx, baseRect);
+    if (settings.showSafeArea) drawSafeArea(ctx, baseRect);
+
     if (overlayImg) {
       const baseSize = Math.min(baseRect.w, baseRect.h);
-      const target = baseSize * 0.35 * settings.scale;
+      const target = baseSize * 0.36 * settings.scale;
 
       const ow = overlayImg.naturalWidth || overlayImg.width;
       const oh = overlayImg.naturalHeight || overlayImg.height;
@@ -239,19 +322,89 @@ export default function CustomizationPage() {
       if (ar >= 1) h = target / ar;
       else w = target * ar;
 
-      const centerX = baseRect.x + baseRect.w * (0.5 + settings.offsetX / 100);
-      const centerY = baseRect.y + baseRect.h * (0.5 + settings.offsetY / 100);
+      const centerX = settings.snapCenter
+        ? baseRect.x + baseRect.w / 2
+        : baseRect.x + baseRect.w * (0.5 + settings.offsetX / 100);
+
+      const centerY = settings.snapCenter
+        ? baseRect.y + baseRect.h / 2
+        : baseRect.y + baseRect.h * (0.5 + settings.offsetY / 100);
 
       ctx.save();
       ctx.globalAlpha = clamp(settings.opacity, 0, 1);
+      ctx.globalCompositeOperation = settings.blendMode;
+
+      const filter = [
+        `hue-rotate(${settings.hue}deg)`,
+        `saturate(${settings.saturate}%)`,
+        `brightness(${settings.brightness}%)`,
+        `contrast(${settings.contrast}%)`,
+        settings.blur > 0 ? `blur(${settings.blur}px)` : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      ctx.filter = filter;
+
+      if (settings.shadow > 0) {
+        ctx.shadowColor = "rgba(0,0,0,0.55)";
+        ctx.shadowBlur = settings.shadow;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = settings.shadow > 10 ? 2 : 1;
+      }
+
       ctx.translate(centerX, centerY);
       ctx.rotate((settings.rotate * Math.PI) / 180);
-      ctx.drawImage(overlayImg, -w / 2, -h / 2, w, h);
+
+      const sx = settings.flipX ? -1 : 1;
+      const sy = settings.flipY ? -1 : 1;
+      ctx.scale(sx, sy);
+
+      const rx = -w / 2;
+      const ry = -h / 2;
+
+      if (settings.radius > 0) {
+        const r = clamp(settings.radius, 0, Math.min(w, h) / 2);
+        ctx.beginPath();
+        ctx.moveTo(rx + r, ry);
+        ctx.arcTo(rx + w, ry, rx + w, ry + h, r);
+        ctx.arcTo(rx + w, ry + h, rx, ry + h, r);
+        ctx.arcTo(rx, ry + h, rx, ry, r);
+        ctx.arcTo(rx, ry, rx + w, ry, r);
+        ctx.closePath();
+        ctx.clip();
+      }
+
+      ctx.drawImage(overlayImg, rx, ry, w, h);
+      ctx.filter = "none";
+
+      if (settings.border > 0) {
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = "transparent";
+        ctx.strokeStyle = settings.borderColor;
+        ctx.lineWidth = settings.border;
+        if (settings.radius > 0) {
+          const r = clamp(settings.radius, 0, Math.min(w, h) / 2);
+          ctx.beginPath();
+          ctx.moveTo(rx + r, ry);
+          ctx.arcTo(rx + w, ry, rx + w, ry + h, r);
+          ctx.arcTo(rx + w, ry + h, rx, ry + h, r);
+          ctx.arcTo(rx, ry + h, rx, ry, r);
+          ctx.arcTo(rx, ry, rx + w, ry, r);
+          ctx.closePath();
+          ctx.stroke();
+        } else {
+          ctx.strokeRect(rx, ry, w, h);
+        }
+      }
+
       ctx.restore();
 
       drawStateRef.current.overlayRect = { x: centerX - w / 2, y: centerY - h / 2, w, h };
+      drawStateRef.current.overlayMeta = { w, h, cx: centerX, cy: centerY };
     } else {
       drawStateRef.current.overlayRect = { x: 0, y: 0, w: 0, h: 0 };
+      drawStateRef.current.overlayMeta = { w: 0, h: 0, cx: 0, cy: 0 };
     }
   };
 
@@ -270,7 +423,7 @@ export default function CustomizationPage() {
 
   const applyOverlay = (dataUrl) => {
     setOverlayDataUrl(dataUrl);
-    setSettings({ ...defaultSettings });
+    setSettings((s) => ({ ...defaultSettings, fineStep: s.fineStep }));
   };
 
   const onUploadWithBg = async (file) => {
@@ -301,10 +454,12 @@ export default function CustomizationPage() {
 
   const clearAll = () => {
     setOverlayDataUrl("");
-    setSettings({ ...defaultSettings });
+    setSettings((s) => ({ ...defaultSettings, fineStep: s.fineStep }));
     localStorage.removeItem(LS_KEYS.overlay);
     localStorage.removeItem(LS_KEYS.settings);
   };
+
+  const resetSettings = () => setSettings((s) => ({ ...defaultSettings, fineStep: s.fineStep }));
 
   const setSetting = (key, value) => setSettings((s) => ({ ...s, [key]: value }));
 
@@ -357,29 +512,39 @@ export default function CustomizationPage() {
     dragRef.current.dragging = false;
   };
 
-  const exportPreview = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const link = document.createElement("a");
-    link.href = canvas.toDataURL("image/png");
-    link.download = `custom-preview-${selectedProductId}.png`;
-    link.click();
+  const quickAlign = (pos) => {
+    if (!overlayImgRef.current) return;
+
+    if (pos === "center") setSettings((s) => ({ ...s, offsetX: 0, offsetY: 0, snapCenter: true }));
+    if (pos === "left") setSettings((s) => ({ ...s, snapCenter: false, offsetX: -35 }));
+    if (pos === "right") setSettings((s) => ({ ...s, snapCenter: false, offsetX: 35 }));
+    if (pos === "top") setSettings((s) => ({ ...s, snapCenter: false, offsetY: -35 }));
+    if (pos === "bottom") setSettings((s) => ({ ...s, snapCenter: false, offsetY: 35 }));
+  };
+
+  const nudge = (dx, dy) => {
+    setSettings((s) => ({
+      ...s,
+      snapCenter: false,
+      offsetX: clamp(s.offsetX + dx * (s.fineStep / 2), -50, 50),
+      offsetY: clamp(s.offsetY + dy * (s.fineStep / 2), -50, 50),
+    }));
   };
 
   return (
     <>
       <Navbar />
       <div className="customization-page">
-        <div className="customization-layout">
-          <aside className="customization-sidebar">
-            <div className="sidebar-block">
-              <div className="sidebar-heading">Products</div>
+        <div className="customization-shell">
+          <div className="panel left-panel">
+            <div className="panel-block">
+              <div className="panel-title">Products</div>
               <div className="product-list">
                 {PRODUCTS.map((p) => (
                   <button
                     key={p.id}
                     type="button"
-                    className={`product-pill ${p.id === selectedProductId ? "active" : ""}`}
+                    className={`pill-btn ${p.id === selectedProductId ? "active" : ""}`}
                     onClick={() => onPickProduct(p.id)}
                   >
                     {p.title}
@@ -388,16 +553,14 @@ export default function CustomizationPage() {
               </div>
             </div>
 
-            <div className="sidebar-block">
-              <div className="sidebar-heading">Variants</div>
+            <div className="panel-block">
+              <div className="panel-title">Variants</div>
               <div className="variant-grid">
                 {selectedProduct.variants.map((src, idx) => (
                   <button
                     key={`${src}-${idx}`}
                     type="button"
-                    className={`variant-tile ${
-                      idx === clamp(selectedVariantIndex, 0, selectedProduct.variants.length - 1) ? "active" : ""
-                    }`}
+                    className={`variant-tile ${idx === clamp(selectedVariantIndex, 0, selectedProduct.variants.length - 1) ? "active" : ""}`}
                     onClick={() => setSelectedVariantIndex(idx)}
                   >
                     <img src={src} alt={`${selectedProduct.title} ${idx + 1}`} />
@@ -406,93 +569,73 @@ export default function CustomizationPage() {
               </div>
             </div>
 
-            <div className="sidebar-block">
-              <div className="sidebar-heading">Controls</div>
+            <div className="panel-block">
+              <div className="panel-title">Upload Logo</div>
+              <div className="upload-stack">
+                <label className={`upload-btn ${loadingBgRemoval ? "disabled" : ""}`}>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={(e) => onUploadWithBg(e.target.files?.[0])}
+                    disabled={loadingBgRemoval}
+                  />
+                  Upload (With BG)
+                </label>
 
-              <div className="control">
-                <div className="control-row">
-                  <span>Size</span>
-                  <span className="control-value">{settings.scale.toFixed(2)}x</span>
-                </div>
-                <input
-                  type="range"
-                  min="0.3"
-                  max="3"
-                  step="0.01"
-                  value={settings.scale}
-                  onChange={(e) => setSetting("scale", Number(e.target.value))}
-                  disabled={!overlayDataUrl}
-                />
-              </div>
+                <label className={`upload-btn alt ${loadingBgRemoval ? "disabled" : ""}`}>
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    onChange={(e) => onUploadWithoutBg(e.target.files?.[0])}
+                    disabled={loadingBgRemoval}
+                  />
+                  Upload (No White BG)
+                </label>
 
-              <div className="control">
-                <div className="control-row">
-                  <span>Rotate</span>
-                  <span className="control-value">{Math.round(settings.rotate)}°</span>
+                <div className="mini-status">
+                  {loadingBgRemoval ? "Processing image..." : overlayDataUrl ? "Logo loaded, drag on preview" : "No logo selected"}
                 </div>
-                <input
-                  type="range"
-                  min="-180"
-                  max="180"
-                  step="1"
-                  value={settings.rotate}
-                  onChange={(e) => setSetting("rotate", Number(e.target.value))}
-                  disabled={!overlayDataUrl}
-                />
-              </div>
-
-              <div className="control">
-                <div className="control-row">
-                  <span>Opacity</span>
-                  <span className="control-value">{Math.round(settings.opacity * 100)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="1"
-                  step="0.01"
-                  value={settings.opacity}
-                  onChange={(e) => setSetting("opacity", Number(e.target.value))}
-                  disabled={!overlayDataUrl}
-                />
-              </div>
-
-              <div className="control">
-                <div className="control-row">
-                  <span>Move X</span>
-                  <span className="control-value">{Math.round(settings.offsetX)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="-50"
-                  max="50"
-                  step="1"
-                  value={settings.offsetX}
-                  onChange={(e) => setSetting("offsetX", Number(e.target.value))}
-                  disabled={!overlayDataUrl}
-                />
-              </div>
-
-              <div className="control">
-                <div className="control-row">
-                  <span>Move Y</span>
-                  <span className="control-value">{Math.round(settings.offsetY)}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="-50"
-                  max="50"
-                  step="1"
-                  value={settings.offsetY}
-                  onChange={(e) => setSetting("offsetY", Number(e.target.value))}
-                  disabled={!overlayDataUrl}
-                />
               </div>
             </div>
-          </aside>
 
-          <main className="customization-main">
+            <div className="panel-block">
+              <div className="panel-title">Quick Align</div>
+              <div className="align-grid">
+                <button className="btn small" type="button" onClick={() => quickAlign("top")} disabled={!overlayDataUrl}>Top</button>
+                <button className="btn small" type="button" onClick={() => quickAlign("center")} disabled={!overlayDataUrl}>Center</button>
+                <button className="btn small" type="button" onClick={() => quickAlign("bottom")} disabled={!overlayDataUrl}>Bottom</button>
+                <button className="btn small" type="button" onClick={() => quickAlign("left")} disabled={!overlayDataUrl}>Left</button>
+                <button className="btn small" type="button" onClick={() => quickAlign("right")} disabled={!overlayDataUrl}>Right</button>
+                <button className="btn small" type="button" onClick={() => setSetting("snapCenter", true)} disabled={!overlayDataUrl}>Snap</button>
+              </div>
+
+              <div className="panel-sub">Precision Nudge</div>
+              <div className="nudge-row">
+                <button className="nudge" type="button" onClick={() => nudge(0, -1)} disabled={!overlayDataUrl}>▲</button>
+                <div className="nudge-mid">
+                  <button className="nudge" type="button" onClick={() => nudge(-1, 0)} disabled={!overlayDataUrl}>◀</button>
+                  <button className="nudge" type="button" onClick={() => nudge(1, 0)} disabled={!overlayDataUrl}>▶</button>
+                </div>
+                <button className="nudge" type="button" onClick={() => nudge(0, 1)} disabled={!overlayDataUrl}>▼</button>
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Fine Step</span>
+                  <span className="control-val">{settings.fineStep}</span>
+                </div>
+                <input type="range" min="1" max="10" step="1" value={settings.fineStep} onChange={(e) => setSetting("fineStep", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+            </div>
+          </div>
+
+          <div className="center-panel">
             <div className="preview-card">
+              <div className="preview-header">
+                <div className="preview-title">Live Preview</div>
+                <div className="preview-sub">Drag logo inside the preview area</div>
+              </div>
+
               <div className="preview-stage" ref={containerRef}>
                 <canvas
                   ref={canvasRef}
@@ -507,52 +650,178 @@ export default function CustomizationPage() {
                 />
               </div>
 
-              <div className="below-actions">
-                <div className="upload-group">
-                  <label className={`upload-btn ${loadingBgRemoval ? "disabled" : ""}`}>
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/jpg,image/webp"
-                      onChange={(e) => onUploadWithBg(e.target.files?.[0])}
-                      disabled={loadingBgRemoval}
-                    />
-                    Upload (With BG)
-                  </label>
-
-                  <label className={`upload-btn secondary ${loadingBgRemoval ? "disabled" : ""}`}>
-                    <input
-                      type="file"
-                      accept="image/png,image/jpeg,image/jpg,image/webp"
-                      onChange={(e) => onUploadWithoutBg(e.target.files?.[0])}
-                      disabled={loadingBgRemoval}
-                    />
-                    Upload (No White BG)
-                  </label>
-                </div>
-
-                <div className="action-group">
-                  <button className="btn secondary" onClick={clearAll} type="button" disabled={loadingBgRemoval}>
-                    Clear
-                  </button>
-                  <button className="btn" onClick={exportPreview} type="button" disabled={loadingBgRemoval}>
-                    Download Preview
-                  </button>
-                </div>
-              </div>
-
-              <div className="status-row">
-                <div className="status-left">
-                  <span className="dot" />
-                  <span className="status-text">
-                    {loadingBgRemoval ? "Removing background..." : "Tip: Upload a PNG logo for best results."}
-                  </span>
-                </div>
-                <div className="status-right">
-                  {overlayDataUrl ? <div className="pill">Logo added</div> : <div className="pill muted">No logo</div>}
-                </div>
+              <div className="center-actions">
+                <button className="btn ghost" type="button" onClick={() => setSetting("showGrid", !settings.showGrid)}>
+                  {settings.showGrid ? "Hide Grid" : "Show Grid"}
+                </button>
+                <button className="btn ghost" type="button" onClick={() => setSetting("showSafeArea", !settings.showSafeArea)}>
+                  {settings.showSafeArea ? "Hide Safe Area" : "Show Safe Area"}
+                </button>
+                <button className="btn danger" type="button" onClick={clearAll} disabled={loadingBgRemoval}>
+                  Clear Logo
+                </button>
               </div>
             </div>
-          </main>
+          </div>
+
+          <div className="panel right-panel">
+            <div className="panel-block">
+              <div className="panel-title">Controls</div>
+
+              <div className="toggle-row">
+                <button className={`chip ${settings.flipX ? "active" : ""}`} type="button" onClick={() => setSetting("flipX", !settings.flipX)} disabled={!overlayDataUrl}>
+                  Flip X
+                </button>
+                <button className={`chip ${settings.flipY ? "active" : ""}`} type="button" onClick={() => setSetting("flipY", !settings.flipY)} disabled={!overlayDataUrl}>
+                  Flip Y
+                </button>
+                <button className={`chip ${settings.snapCenter ? "active" : ""}`} type="button" onClick={() => setSetting("snapCenter", !settings.snapCenter)} disabled={!overlayDataUrl}>
+                  Snap Center
+                </button>
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Size</span>
+                  <span className="control-val">{settings.scale.toFixed(2)}x</span>
+                </div>
+                <input type="range" min="0.25" max="3.2" step="0.01" value={settings.scale} onChange={(e) => setSetting("scale", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Rotate</span>
+                  <span className="control-val">{Math.round(settings.rotate)}°</span>
+                </div>
+                <input type="range" min="-180" max="180" step="1" value={settings.rotate} onChange={(e) => setSetting("rotate", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Opacity</span>
+                  <span className="control-val">{Math.round(settings.opacity * 100)}%</span>
+                </div>
+                <input type="range" min="0.05" max="1" step="0.01" value={settings.opacity} onChange={(e) => setSetting("opacity", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Move X</span>
+                  <span className="control-val">{Math.round(settings.offsetX)}%</span>
+                </div>
+                <input type="range" min="-50" max="50" step="1" value={settings.offsetX} onChange={(e) => setSetting("offsetX", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Move Y</span>
+                  <span className="control-val">{Math.round(settings.offsetY)}%</span>
+                </div>
+                <input type="range" min="-50" max="50" step="1" value={settings.offsetY} onChange={(e) => setSetting("offsetY", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+            </div>
+
+            <div className="panel-block">
+              <div className="panel-title">Effects</div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Blend Mode</span>
+                  <span className="control-val">{settings.blendMode}</span>
+                </div>
+                <select className="select" value={settings.blendMode} onChange={(e) => setSetting("blendMode", e.target.value)} disabled={!overlayDataUrl}>
+                  <option value="source-over">Normal</option>
+                  <option value="multiply">Multiply</option>
+                  <option value="screen">Screen</option>
+                  <option value="overlay">Overlay</option>
+                  <option value="darken">Darken</option>
+                  <option value="lighten">Lighten</option>
+                  <option value="color-dodge">Color Dodge</option>
+                  <option value="color-burn">Color Burn</option>
+                  <option value="hard-light">Hard Light</option>
+                  <option value="soft-light">Soft Light</option>
+                </select>
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Shadow</span>
+                  <span className="control-val">{settings.shadow}px</span>
+                </div>
+                <input type="range" min="0" max="30" step="1" value={settings.shadow} onChange={(e) => setSetting("shadow", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Border</span>
+                  <span className="control-val">{settings.border}px</span>
+                </div>
+                <input type="range" min="0" max="12" step="1" value={settings.border} onChange={(e) => setSetting("border", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Border Color</span>
+                  <span className="control-val">{settings.borderColor}</span>
+                </div>
+                <input type="color" className="color" value={settings.borderColor} onChange={(e) => setSetting("borderColor", e.target.value)} disabled={!overlayDataUrl} />
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Roundness</span>
+                  <span className="control-val">{settings.radius}px</span>
+                </div>
+                <input type="range" min="0" max="60" step="1" value={settings.radius} onChange={(e) => setSetting("radius", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Blur</span>
+                  <span className="control-val">{settings.blur}px</span>
+                </div>
+                <input type="range" min="0" max="12" step="1" value={settings.blur} onChange={(e) => setSetting("blur", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Hue</span>
+                  <span className="control-val">{settings.hue}°</span>
+                </div>
+                <input type="range" min="-180" max="180" step="1" value={settings.hue} onChange={(e) => setSetting("hue", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Saturation</span>
+                  <span className="control-val">{settings.saturate}%</span>
+                </div>
+                <input type="range" min="0" max="220" step="1" value={settings.saturate} onChange={(e) => setSetting("saturate", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Brightness</span>
+                  <span className="control-val">{settings.brightness}%</span>
+                </div>
+                <input type="range" min="40" max="180" step="1" value={settings.brightness} onChange={(e) => setSetting("brightness", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+
+              <div className="control">
+                <div className="control-head">
+                  <span>Contrast</span>
+                  <span className="control-val">{settings.contrast}%</span>
+                </div>
+                <input type="range" min="40" max="180" step="1" value={settings.contrast} onChange={(e) => setSetting("contrast", Number(e.target.value))} disabled={!overlayDataUrl} />
+              </div>
+
+              <div className="right-actions">
+                <button className="btn ghost" type="button" onClick={resetSettings} disabled={loadingBgRemoval}>
+                  Reset Controls
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </>
