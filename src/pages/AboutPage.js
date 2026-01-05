@@ -307,6 +307,204 @@ const AboutPage = () => {
 </section>
 
 
+<section className="ap-galleryWhite">
+  <div className="ap-container">
+    <div className="ap-galleryHead">
+      <h2 className="ap-galleryTitle">Gallery</h2>
+      <p className="ap-gallerySub">
+        A quick look at our customized gifting and printing works. Clean finishing, sharp printing, and premium feel.
+      </p>
+    </div>
+
+    <div className="ap-galleryGrid">
+      <div className="ap-galleryCard">
+        <img
+          src="/images/banners/printing/printing2.jpg"
+          alt="Printing"
+          className="ap-galleryImg"
+          loading="lazy"
+        />
+        <div className="ap-galleryText">
+          <p className="ap-galleryTop">Printing Works</p>
+          <p className="ap-galleryDesc">Visiting cards, wedding cards, pamphlets, and more.</p>
+        </div>
+      </div>
+
+      <div className="ap-galleryCard">
+        <img
+          src="/images/banners/mug-printing.webp"
+          alt="Mug printing"
+          className="ap-galleryImg"
+          loading="lazy"
+        />
+        <div className="ap-galleryText">
+          <p className="ap-galleryTop">Mug Printing</p>
+          <p className="ap-galleryDesc">Photo mugs, logo mugs, and gifting mugs.</p>
+        </div>
+      </div>
+
+      <div className="ap-galleryCard">
+        <img
+          src="/images/banners/Calenders and diaries.webp"
+          alt="Calendars and diaries"
+          className="ap-galleryImg"
+          loading="lazy"
+        />
+        <div className="ap-galleryText">
+          <p className="ap-galleryTop">Calendars & Diaries</p>
+          <p className="ap-galleryDesc">Office and school diaries with custom branding.</p>
+        </div>
+      </div>
+
+      <div className="ap-galleryCard">
+        <img
+          src="/images/banners/clocks/clock3.jpg"
+          alt="Clocks"
+          className="ap-galleryImg"
+          loading="lazy"
+        />
+        <div className="ap-galleryText">
+          <p className="ap-galleryTop">Clocks</p>
+          <p className="ap-galleryDesc">Wall clocks and table clocks for gifting and branding.</p>
+        </div>
+      </div>
+
+      <div className="ap-galleryCard">
+        <img
+          src="/images/banners/stationary/stationary5.jpg"
+          alt="Stationery"
+          className="ap-galleryImg"
+          loading="lazy"
+        />
+        <div className="ap-galleryText">
+          <p className="ap-galleryTop">Stationery</p>
+          <p className="ap-galleryDesc">Pens, stands, notebooks, and office gifting items.</p>
+        </div>
+      </div>
+
+      <div className="ap-galleryCard">
+        <img
+          src="/images/banners/school/school6.jpg"
+          alt="School items"
+          className="ap-galleryImg"
+          loading="lazy"
+        />
+        <div className="ap-galleryText">
+          <p className="ap-galleryTop">School Items</p>
+          <p className="ap-galleryDesc">School diaries, progress reports, covers and ID cards.</p>
+        </div>
+      </div>
+
+      <div className="ap-galleryCard">
+        <img
+          src="/images/banners/center-clock.jpg"
+          alt="Wall clock"
+          className="ap-galleryImg"
+          loading="lazy"
+        />
+        <div className="ap-galleryText">
+          <p className="ap-galleryTop">Wall & Table Clocks</p>
+          <p className="ap-galleryDesc">Perfect for celebrations, offices and gifting needs.</p>
+        </div>
+      </div>
+
+      <div className="ap-galleryCard">
+        <img
+          src="/images/banners/travel-bags.webp"
+          alt="Travel bags"
+          className="ap-galleryImg"
+          loading="lazy"
+        />
+        <div className="ap-galleryText">
+          <p className="ap-galleryTop">Bags & Pouches</p>
+          <p className="ap-galleryDesc">Travel bags, shopping bags, folders and pouches.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
+<section className="ap-blackCta">
+  <div className="ap-container">
+    <div className="ap-blackHead">
+      <h2 className="ap-blackTitle">Let’s Build Something Special</h2>
+      <p className="ap-blackSub">
+        From bulk gifting to premium printing, we help you choose the right products, designs, and finishing.
+        Tell us what you need, we will take care of the rest.
+      </p>
+    </div>
+
+    <div className="ap-blackSplit">
+      <div className="ap-blackLeft">
+        <div className="ap-blackStat">
+          <p className="ap-blackStatTop">Best for</p>
+          <p className="ap-blackStatBig">Schools & Offices</p>
+          <p className="ap-blackStatDesc">
+            Diaries, ID cards, calendars, visiting cards, mementos, medals, and more.
+          </p>
+        </div>
+
+        <div className="ap-blackStat">
+          <p className="ap-blackStatTop">Popular</p>
+          <p className="ap-blackStatBig">Customized Gifts</p>
+          <p className="ap-blackStatDesc">
+            Key chains, mugs, caps, T-shirts, bags, jewellery boxes, and premium gift items.
+          </p>
+        </div>
+
+        <div className="ap-blackStat">
+          <p className="ap-blackStatTop">Quality</p>
+          <p className="ap-blackStatBig">Clean Finishing</p>
+          <p className="ap-blackStatDesc">
+            Sharp printing, neat edges, good material choices, and a premium final look.
+          </p>
+        </div>
+      </div>
+
+      <div className="ap-blackRight">
+        <div className="ap-blackCard">
+          <p className="ap-blackCardTitle">Quick Contact</p>
+          <p className="ap-blackCardText">
+            Call us or WhatsApp your requirements. Share quantity, design, and timeline, we will reply fast.
+          </p>
+
+          <div className="ap-blackBtns">
+            <a className="ap-blackBtn ap-blackBtnPrimary" href="/contact">
+              Contact Page
+            </a>
+            <a className="ap-blackBtn ap-blackBtnOutline" href="tel:9908435065">
+              Call Now
+            </a>
+            <a
+              className="ap-blackBtn ap-blackBtnOutline"
+              href="https://wa.me/919908435065?text=Hi%20Sri%20Swarnakranthi%20Enterprises%2C%20I%20need%20customized%20gifting%20or%20printing."
+              target="_blank"
+              rel="noreferrer"
+            >
+              WhatsApp
+            </a>
+          </div>
+
+          <div className="ap-blackMini">
+            <div className="ap-blackMiniItem">
+              <p className="ap-blackMiniTop">Working Hours</p>
+              <p className="ap-blackMiniBottom">Mon to Sat: 9:30 AM to 8:30 PM</p>
+            </div>
+            <div className="ap-blackMiniItem">
+              <p className="ap-blackMiniTop">Location</p>
+              <p className="ap-blackMiniBottom">Srikakulam - 532 001</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+
       </main>
       <Footer />
     </>
