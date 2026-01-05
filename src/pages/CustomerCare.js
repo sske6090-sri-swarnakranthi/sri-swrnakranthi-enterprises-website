@@ -37,11 +37,11 @@ const CustomerCare = () => {
                 <div className="care-text">
                   <h2>Call us</h2>
                   <p className="care-label">Phone</p>
-                  <p className="care-value">+91 81791 97108</p>
+                  <p className="care-value">+91 99084 35065</p>
                 </div>
               </div>
 
-              <a className="care-action" href="tel:+918179197108">
+              <a className="care-action" href="tel:+919908435065">
                 <span>Call now</span>
                 <FiArrowRight />
               </a>
@@ -55,11 +55,11 @@ const CustomerCare = () => {
                 <div className="care-text">
                   <h2>Email us</h2>
                   <p className="care-label">Support email</p>
-                  <p className="care-value">taraskartonline@gmail.com</p>
+                  <p className="care-value">sske6090@gmail.com</p>
                 </div>
               </div>
 
-              <a className="care-action" href="mailto:taraskartonline@gmail.com">
+              <a className="care-action" href="mailto:sske6090@gmail.com">
                 <span>Send email</span>
                 <FiArrowRight />
               </a>
@@ -92,7 +92,7 @@ const CustomerCare = () => {
                   <h2>Office address</h2>
                   <p className="care-label">Head office</p>
                   <p className="care-value">
-                    Door No: 16-1-61, MG Road, Manhar Shopping Mall, Vizianagaram, Andhra Pradesh, 535002
+                    Near 7Road Jn,. Pandumpulla Jn., Lalinga Road, Danvantri Building, Opp. Chandramouli Brothers, Srikakulam - 532 001.
                   </p>
                 </div>
               </div>

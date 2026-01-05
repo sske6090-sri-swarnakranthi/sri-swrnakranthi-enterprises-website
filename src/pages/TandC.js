@@ -84,7 +84,7 @@ const TandC = () => {
           <section id="intro" className="tc-block">
             <h2><span className="tc-index">1.</span> Introduction</h2>
             <p>
-              Welcome to Taras Kart. By accessing or using our website or placing an order, you agree to these Terms,
+              Welcome to SRi Swarnakranthi. By accessing or using our website or placing an order, you agree to these Terms,
               the Shipping Policy, and the Cancellations & Refunds Policy contained on this page.
             </p>
           </section>
@@ -176,7 +176,7 @@ const TandC = () => {
           <section id="ip" className="tc-block">
             <h2><span className="tc-index">8.</span> Intellectual Property</h2>
             <p>
-              All site content is the property of Taras Kart. You may not copy, reproduce, or distribute content without
+              All site content is the property of Sri Swarnakranthi. You may not copy, reproduce, or distribute content without
               prior written permission.
             </p>
           </section>
@@ -191,11 +191,11 @@ const TandC = () => {
 
           <section id="contact" className="tc-block">
             <h2><span className="tc-index">10.</span> Contact Us</h2>
-            <p><strong>Taras Kart</strong></p>
+            <p><strong>Sri Swarnakranthi</strong></p>
             <p>
               Email:{' '}
-              <a className="tc-link" href="mailto:taraskartonline@gmail.com">
-                taraskartonline@gmail.com
+              <a className="tc-link" href="mailto:sske6090@gmail.com">
+                sske6090@gmail.com
               </a>
             </p>
             <p>Customer Support: Mon–Sat, 10:00 AM–6:00 PM IST</p>
