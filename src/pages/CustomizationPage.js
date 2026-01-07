@@ -33,7 +33,7 @@ const defaultSettings = {
   blendMode: "source-over",
   shadow: 0,
   border: 0,
-  borderColor: "#ffffff",
+  borderColor: "#1e6bff",
   radius: 0,
   blur: 0,
   hue: 0,
@@ -206,8 +206,8 @@ export default function CustomizationPage() {
     const ro = new ResizeObserver((entries) => {
       const entry = entries[0];
       if (!entry) return;
-      const w = Math.max(300, Math.floor(entry.contentRect.width));
-      const h = Math.max(340, Math.floor(entry.contentRect.height));
+      const w = Math.max(320, Math.floor(entry.contentRect.width));
+      const h = Math.max(380, Math.floor(entry.contentRect.height));
       const canvas = canvasRef.current;
       const dpr = window.devicePixelRatio || 1;
       canvas.width = w * dpr;
@@ -236,8 +236,8 @@ export default function CustomizationPage() {
   const drawGrid = (ctx, baseRect) => {
     const { x, y, w, h } = baseRect;
     ctx.save();
-    ctx.globalAlpha = 0.14;
-    ctx.strokeStyle = "#ffffff";
+    ctx.globalAlpha = 0.12;
+    ctx.strokeStyle = "#1e6bff";
     ctx.lineWidth = 1;
     const cols = 6;
     const rows = 6;
@@ -261,7 +261,7 @@ export default function CustomizationPage() {
   const drawSafeArea = (ctx, baseRect) => {
     const { x, y, w, h } = baseRect;
     ctx.save();
-    ctx.globalAlpha = 0.2;
+    ctx.globalAlpha = 0.18;
     ctx.strokeStyle = "#1e6bff";
     ctx.lineWidth = 2;
     const pad = Math.min(w, h) * 0.08;
@@ -291,19 +291,19 @@ export default function CustomizationPage() {
     if (baseImg) {
       ctx.drawImage(baseImg, baseRect.x, baseRect.y, baseRect.w, baseRect.h);
     } else {
-      ctx.fillStyle = "#0a0a0a";
-      ctx.fillRect(0, 0, cw, ch);
       ctx.fillStyle = "#ffffff";
-      ctx.font = "600 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.fillStyle = "#1e6bff";
+      ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
       ctx.fillText("Preview unavailable", 16, 28);
     }
 
     ctx.save();
-    ctx.globalAlpha = 0.08;
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "600 26px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = "#1e6bff";
+    ctx.font = "800 26px system-ui, -apple-system, Segoe UI, Roboto, Arial";
     ctx.rotate((-10 * Math.PI) / 180);
-    ctx.fillText("PREVIEW ONLY", -10, ch * 0.65);
+    ctx.fillText("PREVIEW", -10, ch * 0.7);
     ctx.restore();
 
     if (settings.showGrid) drawGrid(ctx, baseRect);
@@ -347,7 +347,7 @@ export default function CustomizationPage() {
       ctx.filter = filter;
 
       if (settings.shadow > 0) {
-        ctx.shadowColor = "rgba(0,0,0,0.55)";
+        ctx.shadowColor = "rgba(30, 107, 255, 0.28)";
         ctx.shadowBlur = settings.shadow;
         ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = settings.shadow > 10 ? 2 : 1;
@@ -380,7 +380,6 @@ export default function CustomizationPage() {
 
       if (settings.border > 0) {
         ctx.shadowBlur = 0;
-        ctx.shadowColor = "transparent";
         ctx.strokeStyle = settings.borderColor;
         ctx.lineWidth = settings.border;
         if (settings.radius > 0) {
@@ -460,7 +459,6 @@ export default function CustomizationPage() {
   };
 
   const resetSettings = () => setSettings((s) => ({ ...defaultSettings, fineStep: s.fineStep }));
-
   const setSetting = (key, value) => setSettings((s) => ({ ...s, [key]: value }));
 
   const isPointInOverlay = (x, y) => {
@@ -514,7 +512,6 @@ export default function CustomizationPage() {
 
   const quickAlign = (pos) => {
     if (!overlayImgRef.current) return;
-
     if (pos === "center") setSettings((s) => ({ ...s, offsetX: 0, offsetY: 0, snapCenter: true }));
     if (pos === "left") setSettings((s) => ({ ...s, snapCenter: false, offsetX: -35 }));
     if (pos === "right") setSettings((s) => ({ ...s, snapCenter: false, offsetX: 35 }));
@@ -535,6 +532,13 @@ export default function CustomizationPage() {
     <>
       <Navbar />
       <div className="customization-page">
+        <div className="customization-header">
+          <div className="customization-title">Customize Your Product</div>
+          <div className="customization-desc">
+            Pick a product, upload your logo, and adjust it live in the preview.
+          </div>
+        </div>
+
         <div className="customization-shell">
           <div className="panel left-panel">
             <div className="panel-block">
@@ -560,7 +564,9 @@ export default function CustomizationPage() {
                   <button
                     key={`${src}-${idx}`}
                     type="button"
-                    className={`variant-tile ${idx === clamp(selectedVariantIndex, 0, selectedProduct.variants.length - 1) ? "active" : ""}`}
+                    className={`variant-tile ${
+                      idx === clamp(selectedVariantIndex, 0, selectedProduct.variants.length - 1) ? "active" : ""
+                    }`}
                     onClick={() => setSelectedVariantIndex(idx)}
                   >
                     <img src={src} alt={`${selectedProduct.title} ${idx + 1}`} />
@@ -582,18 +588,22 @@ export default function CustomizationPage() {
                   Upload (With BG)
                 </label>
 
-                <label className={`upload-btn alt ${loadingBgRemoval ? "disabled" : ""}`}>
+                <label className={`upload-btn outline ${loadingBgRemoval ? "disabled" : ""}`}>
                   <input
                     type="file"
                     accept="image/png,image/jpeg,image/jpg,image/webp"
                     onChange={(e) => onUploadWithoutBg(e.target.files?.[0])}
                     disabled={loadingBgRemoval}
                   />
-                  Upload (No White BG)
+                  Upload (Remove White BG)
                 </label>
 
                 <div className="mini-status">
-                  {loadingBgRemoval ? "Processing image..." : overlayDataUrl ? "Logo loaded, drag on preview" : "No logo selected"}
+                  {loadingBgRemoval
+                    ? "Processing image..."
+                    : overlayDataUrl
+                    ? "Logo loaded, drag it in preview"
+                    : "No logo selected"}
                 </div>
               </div>
             </div>
@@ -601,22 +611,42 @@ export default function CustomizationPage() {
             <div className="panel-block">
               <div className="panel-title">Quick Align</div>
               <div className="align-grid">
-                <button className="btn small" type="button" onClick={() => quickAlign("top")} disabled={!overlayDataUrl}>Top</button>
-                <button className="btn small" type="button" onClick={() => quickAlign("center")} disabled={!overlayDataUrl}>Center</button>
-                <button className="btn small" type="button" onClick={() => quickAlign("bottom")} disabled={!overlayDataUrl}>Bottom</button>
-                <button className="btn small" type="button" onClick={() => quickAlign("left")} disabled={!overlayDataUrl}>Left</button>
-                <button className="btn small" type="button" onClick={() => quickAlign("right")} disabled={!overlayDataUrl}>Right</button>
-                <button className="btn small" type="button" onClick={() => setSetting("snapCenter", true)} disabled={!overlayDataUrl}>Snap</button>
+                <button className="btn small" type="button" onClick={() => quickAlign("top")} disabled={!overlayDataUrl}>
+                  Top
+                </button>
+                <button className="btn small" type="button" onClick={() => quickAlign("center")} disabled={!overlayDataUrl}>
+                  Center
+                </button>
+                <button className="btn small" type="button" onClick={() => quickAlign("bottom")} disabled={!overlayDataUrl}>
+                  Bottom
+                </button>
+                <button className="btn small" type="button" onClick={() => quickAlign("left")} disabled={!overlayDataUrl}>
+                  Left
+                </button>
+                <button className="btn small" type="button" onClick={() => quickAlign("right")} disabled={!overlayDataUrl}>
+                  Right
+                </button>
+                <button className="btn small" type="button" onClick={() => setSetting("snapCenter", true)} disabled={!overlayDataUrl}>
+                  Snap
+                </button>
               </div>
 
               <div className="panel-sub">Precision Nudge</div>
               <div className="nudge-row">
-                <button className="nudge" type="button" onClick={() => nudge(0, -1)} disabled={!overlayDataUrl}>▲</button>
+                <button className="nudge" type="button" onClick={() => nudge(0, -1)} disabled={!overlayDataUrl}>
+                  ▲
+                </button>
                 <div className="nudge-mid">
-                  <button className="nudge" type="button" onClick={() => nudge(-1, 0)} disabled={!overlayDataUrl}>◀</button>
-                  <button className="nudge" type="button" onClick={() => nudge(1, 0)} disabled={!overlayDataUrl}>▶</button>
+                  <button className="nudge" type="button" onClick={() => nudge(-1, 0)} disabled={!overlayDataUrl}>
+                    ◀
+                  </button>
+                  <button className="nudge" type="button" onClick={() => nudge(1, 0)} disabled={!overlayDataUrl}>
+                    ▶
+                  </button>
                 </div>
-                <button className="nudge" type="button" onClick={() => nudge(0, 1)} disabled={!overlayDataUrl}>▼</button>
+                <button className="nudge" type="button" onClick={() => nudge(0, 1)} disabled={!overlayDataUrl}>
+                  ▼
+                </button>
               </div>
 
               <div className="control">
@@ -624,7 +654,15 @@ export default function CustomizationPage() {
                   <span>Fine Step</span>
                   <span className="control-val">{settings.fineStep}</span>
                 </div>
-                <input type="range" min="1" max="10" step="1" value={settings.fineStep} onChange={(e) => setSetting("fineStep", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="1"
+                  max="10"
+                  step="1"
+                  value={settings.fineStep}
+                  onChange={(e) => setSetting("fineStep", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
             </div>
           </div>
@@ -633,7 +671,7 @@ export default function CustomizationPage() {
             <div className="preview-card">
               <div className="preview-header">
                 <div className="preview-title">Live Preview</div>
-                <div className="preview-sub">Drag logo inside the preview area</div>
+                <div className="preview-sub">Drag the logo inside the preview</div>
               </div>
 
               <div className="preview-stage" ref={containerRef}>
@@ -651,13 +689,13 @@ export default function CustomizationPage() {
               </div>
 
               <div className="center-actions">
-                <button className="btn ghost" type="button" onClick={() => setSetting("showGrid", !settings.showGrid)}>
+                <button className="btn outline" type="button" onClick={() => setSetting("showGrid", !settings.showGrid)}>
                   {settings.showGrid ? "Hide Grid" : "Show Grid"}
                 </button>
-                <button className="btn ghost" type="button" onClick={() => setSetting("showSafeArea", !settings.showSafeArea)}>
+                <button className="btn outline" type="button" onClick={() => setSetting("showSafeArea", !settings.showSafeArea)}>
                   {settings.showSafeArea ? "Hide Safe Area" : "Show Safe Area"}
                 </button>
-                <button className="btn danger" type="button" onClick={clearAll} disabled={loadingBgRemoval}>
+                <button className="btn soft" type="button" onClick={clearAll} disabled={loadingBgRemoval}>
                   Clear Logo
                 </button>
               </div>
@@ -816,7 +854,7 @@ export default function CustomizationPage() {
               </div>
 
               <div className="right-actions">
-                <button className="btn ghost" type="button" onClick={resetSettings} disabled={loadingBgRemoval}>
+                <button className="btn outline" type="button" onClick={resetSettings} disabled={loadingBgRemoval}>
                   Reset Controls
                 </button>
               </div>
