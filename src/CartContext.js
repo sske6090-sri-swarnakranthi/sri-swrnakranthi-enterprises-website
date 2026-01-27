@@ -1,17 +1,22 @@
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 
-const DEFAULT_API_BASE = 'http://localhost:5000'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = API_BASE_RAW.replace(/\/+$/, '')
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
 const CartContext = createContext(null)
 
 const isIntId = (v) => {
   const n = Number(v)
   return Number.isInteger(n) && n > 0
+}
+
+const getUserId = () => {
+  if (typeof window === 'undefined') return ''
+  return sessionStorage.getItem('userId') || localStorage.getItem('userId') || ''
 }
 
 const pickImage = (images) => {
@@ -60,16 +65,14 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([])
   const [loading, setLoading] = useState(false)
 
-  const userId =
-    (typeof window !== 'undefined' ? sessionStorage.getItem('userId') : '') ||
-    (typeof window !== 'undefined' ? localStorage.getItem('userId') : '') ||
-    ''
+  const fetchCartItems = useCallback(async () => {
+    const userId = getUserId()
 
-  const fetchCartItems = async () => {
     if (!isIntId(userId)) {
       setCartItems([])
       return
     }
+
     setLoading(true)
     try {
       const res = await fetch(`${API_BASE}/api/cart/${userId}`, { cache: 'no-store' })
@@ -85,121 +88,123 @@ export const CartProvider = ({ children }) => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchCartItems()
-  }, [userId])
+  }, [fetchCartItems])
 
-  const addToCart = async (item) => {
-    const uid =
-      (typeof window !== 'undefined' ? sessionStorage.getItem('userId') : '') ||
-      (typeof window !== 'undefined' ? localStorage.getItem('userId') : '') ||
-      userId
+  useEffect(() => {
+    const onStorage = () => fetchCartItems()
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [fetchCartItems])
 
-    if (!isIntId(uid)) return false
+  const addToCart = useCallback(
+    async (item) => {
+      const uid = getUserId()
+      if (!isIntId(uid)) return false
 
-    const productId = Number(item.product_id || item.productId || item.id || item.product?.id || 0)
-    const selectedSize = (item.selectedSize || item.selected_size || item.size || '').trim()
-    const selectedColor = (item.selectedColor || item.selected_color || item.color || item.colour || '').trim()
-    const quantity = Number(item.quantity || 1)
+      const productId = Number(item.product_id || item.productId || item.id || item.product?.id || 0)
+      const selectedSize = String(item.selectedSize || item.selected_size || item.size || '').trim()
+      const selectedColor = String(item.selectedColor || item.selected_color || item.color || item.colour || '').trim()
+      const quantity = Number(item.quantity || 1)
 
-    if (!productId) return false
+      if (!productId) return false
 
-    try {
-      const res = await fetch(`${API_BASE}/api/cart`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: String(uid),
-          product_id: productId,
-          selected_size: selectedSize ? selectedSize : null,
-          selected_color: selectedColor ? selectedColor : null,
-          quantity
+      try {
+        const res = await fetch(`${API_BASE}/api/cart`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: String(uid),
+            product_id: productId,
+            selected_size: selectedSize ? selectedSize : null,
+            selected_color: selectedColor ? selectedColor : null,
+            quantity
+          })
         })
-      })
 
-      if (!res.ok) return false
-      await fetchCartItems()
-      return true
-    } catch {
-      return false
-    }
-  }
+        if (!res.ok) return false
+        await fetchCartItems()
+        return true
+      } catch {
+        return false
+      }
+    },
+    [fetchCartItems]
+  )
 
-  const removeFromCart = async (cartIdOrItem) => {
-    const uid =
-      (typeof window !== 'undefined' ? sessionStorage.getItem('userId') : '') ||
-      (typeof window !== 'undefined' ? localStorage.getItem('userId') : '') ||
-      userId
+  const removeFromCart = useCallback(
+    async (cartIdOrItem) => {
+      const uid = getUserId()
+      if (!isIntId(uid)) return false
 
-    if (!isIntId(uid)) return false
+      let row = null
+      if (typeof cartIdOrItem === 'object' && cartIdOrItem) {
+        row = cartIdOrItem
+      } else {
+        const cid = Number(cartIdOrItem)
+        row = cartItems.find((x) => Number(x.cart_id) === cid) || null
+      }
 
-    let row = null
+      if (!row) return false
 
-    if (typeof cartIdOrItem === 'object' && cartIdOrItem) {
-      row = cartIdOrItem
-    } else {
-      const cid = Number(cartIdOrItem)
-      row = cartItems.find((x) => Number(x.cart_id) === cid) || null
-    }
-
-    if (!row) return false
-
-    try {
-      const res = await fetch(`${API_BASE}/api/cart`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: String(uid),
-          product_id: Number(row.product_id),
-          selected_size: row.selected_size ?? null,
-          selected_color: row.selected_color ?? null
+      try {
+        const res = await fetch(`${API_BASE}/api/cart`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: String(uid),
+            product_id: Number(row.product_id),
+            selected_size: row.selected_size ?? null,
+            selected_color: row.selected_color ?? null
+          })
         })
-      })
 
-      if (!res.ok) return false
-      await fetchCartItems()
-      return true
-    } catch {
-      return false
-    }
-  }
+        if (!res.ok) return false
+        await fetchCartItems()
+        return true
+      } catch {
+        return false
+      }
+    },
+    [cartItems, fetchCartItems]
+  )
 
-  const updateQuantity = async (cartId, quantity) => {
-    const uid =
-      (typeof window !== 'undefined' ? sessionStorage.getItem('userId') : '') ||
-      (typeof window !== 'undefined' ? localStorage.getItem('userId') : '') ||
-      userId
+  const updateQuantity = useCallback(
+    async (cartId, quantity) => {
+      const uid = getUserId()
+      if (!isIntId(uid)) return false
 
-    if (!isIntId(uid)) return false
+      const qty = Number(quantity)
+      if (!Number.isInteger(qty) || qty < 1) return false
 
-    const qty = Number(quantity)
-    if (!Number.isInteger(qty) || qty < 1) return false
+      const row = cartItems.find((x) => Number(x.cart_id) === Number(cartId)) || null
+      if (!row) return false
 
-    const row = cartItems.find((x) => Number(x.cart_id) === Number(cartId)) || null
-    if (!row) return false
-
-    try {
-      const res = await fetch(`${API_BASE}/api/cart`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          user_id: String(uid),
-          product_id: Number(row.product_id),
-          selected_size: row.selected_size ?? null,
-          selected_color: row.selected_color ?? null,
-          quantity: qty
+      try {
+        const res = await fetch(`${API_BASE}/api/cart`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: String(uid),
+            product_id: Number(row.product_id),
+            selected_size: row.selected_size ?? null,
+            selected_color: row.selected_color ?? null,
+            quantity: qty
+          })
         })
-      })
 
-      if (!res.ok) return false
-      await fetchCartItems()
-      return true
-    } catch {
-      return false
-    }
-  }
+        if (!res.ok) return false
+        await fetchCartItems()
+        return true
+      } catch {
+        return false
+      }
+    },
+    [cartItems, fetchCartItems]
+  )
 
   const value = useMemo(
     () => ({
@@ -210,7 +215,7 @@ export const CartProvider = ({ children }) => {
       removeFromCart,
       updateQuantity
     }),
-    [cartItems, loading]
+    [cartItems, loading, fetchCartItems, addToCart, removeFromCart, updateQuantity]
   )
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
