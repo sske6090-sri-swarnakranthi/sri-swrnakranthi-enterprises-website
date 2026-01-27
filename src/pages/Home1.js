@@ -1,21 +1,15 @@
-// src/pages/Home1.js
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import './Home1.css'
 import Navbar from './Navbar'
 import Footer from './Footer'
-//import { Swiper, SwiperSlide } from 'swiper/react'
-//import { Autoplay, EffectCoverflow } from 'swiper/modules'
-
 import 'swiper/css'
 import 'swiper/css/effect-coverflow'
 import 'swiper/css/autoplay'
-
 import { Link } from 'react-router-dom'
 
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://taras-kart-backend.vercel.app'
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 
 export default function Home1() {
-  const railRef = useRef(null)
   const [imageMap, setImageMap] = useState({})
 
   useEffect(() => {
@@ -26,31 +20,15 @@ export default function Home1() {
         const data = await res.json()
         const map = {}
         data.forEach(item => {
-          if (item.id && item.imageUrl) {
-            map[item.id] = item.imageUrl
-          }
+          if (item.id && item.imageUrl) map[item.id] = item.imageUrl
         })
         setImageMap(map)
-      } catch (e) { }
+      } catch (e) {}
     }
     run()
   }, [])
 
-  const getImage = path => {
-    return imageMap[path] || path
-  }
-
-  //const scrollLeft = () => {
-   // if (railRef.current) {
-    //  railRef.current.scrollBy({ left: -300, behavior: 'smooth' })
-    //}
-  //}
-
-  //const scrollRight = () => {
-    //if (railRef.current) {
-     // railRef.current.scrollBy({ left: 300, behavior: 'smooth' })
-   // }
-  //}
+  const getImage = path => imageMap[path] || path
 
   return (
     <div className="home1-page-new-home">
@@ -61,21 +39,16 @@ export default function Home1() {
             <img
               className="home1-hero-banner-img"
               src={getImage('/images/banners/home-banner.jpg')}
-              alt="Sri Swarnakranthi Enterprises"
+              alt="Sri Swarnakranthi Enterprises home banner"
               loading="eager"
             />
-
             <div className="home1-hero-overlay" />
-
             <div className="home1-hero-content">
               <h1 className="home1-hero-title">Sri Swarnakranthi Enterprises</h1>
               <p className="home1-hero-subtitle">Custom gifts and printing solutions</p>
             </div>
           </div>
         </section>
-
-
-
 
         <section className="cat-section-new-home">
           <div className="cat-inner-new-home">
@@ -86,63 +59,63 @@ export default function Home1() {
             <div className="cat-row-new-home">
               <Link to="/products" className="cat-card-new-home">
                 <div className="cat-media-new-home">
-                  <img src={getImage('/images/banners/Calenders and diaries.webp')} alt="Calenders and diaries" />
+                  <img src={getImage('/images/banners/Calenders and diaries.webp')} alt="Calendars and diaries category" />
                 </div>
                 <p className="cat-label-new-home">Calenders and Diaries</p>
               </Link>
 
               <Link to="/products" className="cat-card-new-home">
                 <div className="cat-media-new-home">
-                  <img src={getImage('/images/banners/id cards-printing.png')} alt="ID Cards Printing" />
+                  <img src={getImage('/images/banners/id cards-printing.png')} alt="ID cards printing category" />
                 </div>
                 <p className="cat-label-new-home">ID Cards Printing</p>
               </Link>
 
               <Link to="/products" className="cat-card-new-home">
                 <div className="cat-media-new-home">
-                  <img src={getImage('/images/banners/mug-printing.webp')} alt="Mug Printing" />
+                  <img src={getImage('/images/banners/mug-printing.webp')} alt="Mug printing category" />
                 </div>
                 <p className="cat-label-new-home">Mug Printing</p>
               </Link>
 
               <Link to="/products" className="cat-card-new-home">
                 <div className="cat-media-new-home">
-                  <img src={getImage('/images/banners/packaging-printing.webp')} alt="Packaging Printing" />
+                  <img src={getImage('/images/banners/packaging-printing.webp')} alt="Packaging printing category" />
                 </div>
                 <p className="cat-label-new-home">Packaging Printing</p>
               </Link>
 
               <Link to="/products" className="cat-card-new-home">
                 <div className="cat-media-new-home">
-                  <img src={getImage('/images/banners/pamplete-printing.png')} alt="Pamphlet Printing" />
+                  <img src={getImage('/images/banners/pamplete-printing.png')} alt="Pamphlet printing category" />
                 </div>
                 <p className="cat-label-new-home">Pamphlet Printing</p>
               </Link>
 
               <Link to="/products" className="cat-card-new-home">
                 <div className="cat-media-new-home">
-                  <img src={getImage('/images/banners/photo-printing.webp')} alt="Photo Printing" />
+                  <img src={getImage('/images/banners/photo-printing.webp')} alt="Photo print category" />
                 </div>
                 <p className="cat-label-new-home">Photo Printing</p>
               </Link>
 
               <Link to="/products" className="cat-card-new-home">
                 <div className="cat-media-new-home">
-                  <img src={getImage('/images/banners/travel-bags.webp')} alt="Travel Bags" />
+                  <img src={getImage('/images/banners/travel-bags.webp')} alt="Travel bags category" />
                 </div>
                 <p className="cat-label-new-home">Travel Bags</p>
               </Link>
 
               <Link to="/products" className="cat-card-new-home">
                 <div className="cat-media-new-home">
-                  <img src={getImage('/images/banners/visiting-cards.webp')} alt="Visiting Cards" />
+                  <img src={getImage('/images/banners/visiting-cards.webp')} alt="Visiting cards category" />
                 </div>
                 <p className="cat-label-new-home">Visiting Cards</p>
               </Link>
 
               <Link to="/products" className="cat-card-new-home">
                 <div className="cat-media-new-home">
-                  <img src={getImage('/images/banners/weddingcards-printing.webp')} alt="Wedding Cards Printing" />
+                  <img src={getImage('/images/banners/weddingcards-printing.webp')} alt="Wedding cards printing category" />
                 </div>
                 <p className="cat-label-new-home">Wedding Cards Printing</p>
               </Link>
@@ -150,11 +123,10 @@ export default function Home1() {
           </div>
         </section>
 
-
         <section className="home-part-grid">
           <div className="home-part-inner">
             <div className="home-part-card">
-              <img src={getImage('/images/banners/part-ladies-bag.jpg')} alt="Calenders" className="home-part-img" />
+              <img src={getImage('/images/banners/part-ladies-bag.jpg')} alt="Ladies bags highlight" className="home-part-img" />
             </div>
 
             <div className="home-part-text">
@@ -163,7 +135,7 @@ export default function Home1() {
             </div>
 
             <div className="home-part-card">
-              <img src={getImage('/images/banners/part-wedding-card.jpg')} alt="Mug Printing" className="home-part-img" />
+              <img src={getImage('/images/banners/part-wedding-card.jpg')} alt="Wedding cards highlight" className="home-part-img" />
             </div>
 
             <div className="home-part-text">
@@ -177,7 +149,7 @@ export default function Home1() {
             </div>
 
             <div className="home-part-card">
-              <img src={getImage('/images/banners/part-mug-printing.jpg')} alt="Wedding Cards" className="home-part-img" />
+              <img src={getImage('/images/banners/part-mug-printing.jpg')} alt="Mug printing highlight" className="home-part-img" />
             </div>
 
             <div className="home-part-text">
@@ -186,61 +158,56 @@ export default function Home1() {
             </div>
 
             <div className="home-part-card">
-              <img src={getImage('/images/banners/part-calenders.jpg')} alt="Calenders" className="home-part-img" />
+              <img src={getImage('/images/banners/part-calenders.jpg')} alt="Calendars highlight" className="home-part-img" />
             </div>
           </div>
         </section>
 
-
-
-
-
-
         <section className="split-banner-section">
           <div className="split-banner-inner">
             <div className="split-left">
-              <img src={getImage('/images/banners/left-banner.png')} alt="Left Banner" />
+              <img src={getImage('/images/banners/left-banner.png')} alt="Promotional banner" />
             </div>
 
             <div className="split-right">
               <Link to="/products" className="split-right-card">
                 <div className="split-right-media">
-                  <img src={getImage('/images/banners/Calenders and diaries.webp')} alt="Calenders and diaries" />
+                  <img src={getImage('/images/banners/Calenders and diaries.webp')} alt="Calendars and diaries" />
                 </div>
                 <p className="split-right-text">Calenders and Diaries</p>
               </Link>
 
               <Link to="/products" className="split-right-card">
                 <div className="split-right-media">
-                  <img src={getImage('/images/banners/id cards-printing.png')} alt="ID Cards Printing" />
+                  <img src={getImage('/images/banners/id cards-printing.png')} alt="ID cards printing" />
                 </div>
                 <p className="split-right-text">ID Cards Printing</p>
               </Link>
 
               <Link to="/products" className="split-right-card">
                 <div className="split-right-media">
-                  <img src={getImage('/images/banners/mug-printing.webp')} alt="Mug Printing" />
+                  <img src={getImage('/images/banners/mug-printing.webp')} alt="Mug printing" />
                 </div>
                 <p className="split-right-text">Mug Printing</p>
               </Link>
 
               <Link to="/products" className="split-right-card">
                 <div className="split-right-media">
-                  <img src={getImage('/images/banners/packaging-printing.webp')} alt="Packaging Printing" />
+                  <img src={getImage('/images/banners/packaging-printing.webp')} alt="Packaging printing" />
                 </div>
                 <p className="split-right-text">Packaging Printing</p>
               </Link>
 
               <Link to="/products" className="split-right-card">
                 <div className="split-right-media">
-                  <img src={getImage('/images/banners/pamplete-printing.png')} alt="Pamphlet Printing" />
+                  <img src={getImage('/images/banners/pamplete-printing.png')} alt="Pamphlet printing" />
                 </div>
                 <p className="split-right-text">Pamphlet Printing</p>
               </Link>
 
               <Link to="/products" className="split-right-card">
                 <div className="split-right-media">
-                  <img src={getImage('/images/banners/photo-printing.webp')} alt="Photo Printing" />
+                  <img src={getImage('/images/banners/photo-printing.webp')} alt="Photo print sample" />
                 </div>
                 <p className="split-right-text">Photo Printing</p>
               </Link>
@@ -248,12 +215,10 @@ export default function Home1() {
           </div>
         </section>
 
-
-
         <section className="three-clock-section">
           <div className="three-clock-grid">
             <div className="three-clock-card">
-              <img src={getImage('/images/banners/wall-clock.jpg')} alt="Wall Clock" className="three-clock-img" />
+              <img src={getImage('/images/banners/wall-clock.jpg')} alt="Wall clock product" className="three-clock-img" />
               <div className="three-clock-overlay" />
               <div className="three-clock-content">
                 <h3 className="three-clock-title">Wall Clocks</h3>
@@ -263,12 +228,12 @@ export default function Home1() {
             </div>
 
             <div className="three-clock-card three-clock-center">
-              <img src={getImage('/images/banners/center-clock.jpg')} alt="Center Clock" className="three-clock-img" />
+              <img src={getImage('/images/banners/center-clock.jpg')} alt="Clock collection highlight" className="three-clock-img" />
               <div className="three-clock-overlay" />
             </div>
 
             <div className="three-clock-card">
-              <img src={getImage('/images/banners/table-clock.jpg')} alt="Table Clock" className="three-clock-img" />
+              <img src={getImage('/images/banners/table-clock.jpg')} alt="Table clock product" className="three-clock-img" />
               <div className="three-clock-overlay" />
               <div className="three-clock-content">
                 <h3 className="three-clock-title">Table Clocks</h3>
@@ -289,7 +254,7 @@ export default function Home1() {
             <div className="clock-sell-grid">
               <div className="clock-sell-card">
                 <div className="clock-sell-media">
-                  <img src={getImage('/images/banners/clocks/clock1.jpg')} alt="Clock 1" />
+                  <img src={getImage('/images/banners/clocks/clock1.jpg')} alt="Premium wall clock" />
                 </div>
                 <div className="clock-sell-body">
                   <p className="clock-sell-brand">Nike</p>
@@ -304,7 +269,7 @@ export default function Home1() {
 
               <div className="clock-sell-card">
                 <div className="clock-sell-media">
-                  <img src={getImage('/images/banners/clocks/clock2.jpg')} alt="Clock 2" />
+                  <img src={getImage('/images/banners/clocks/clock2.jpg')} alt="Modern table clock" />
                 </div>
                 <div className="clock-sell-body">
                   <p className="clock-sell-brand">Nike</p>
@@ -319,7 +284,7 @@ export default function Home1() {
 
               <div className="clock-sell-card">
                 <div className="clock-sell-media">
-                  <img src={getImage('/images/banners/clocks/clock3.jpg')} alt="Clock 3" />
+                  <img src={getImage('/images/banners/clocks/clock3.jpg')} alt="Classic designer clock" />
                 </div>
                 <div className="clock-sell-body">
                   <p className="clock-sell-brand">Nike</p>
@@ -334,7 +299,7 @@ export default function Home1() {
 
               <div className="clock-sell-card">
                 <div className="clock-sell-media">
-                  <img src={getImage('/images/banners/clocks/clock4.jpg')} alt="Clock 4" />
+                  <img src={getImage('/images/banners/clocks/clock4.jpg')} alt="Luxury wall clock" />
                 </div>
                 <div className="clock-sell-body">
                   <p className="clock-sell-brand">Nike</p>
@@ -350,9 +315,6 @@ export default function Home1() {
           </div>
         </section>
 
-
-
-
         <section className="print-showcase-section">
           <div className="print-showcase-inner">
             <h2 className="print-showcase-title">What We Are Printing</h2>
@@ -361,35 +323,35 @@ export default function Home1() {
             <div className="print-showcase-grid">
               <Link to="/products" className="print-showcase-card">
                 <div className="print-showcase-media">
-                  <img src={getImage('/images/banners/printing-card1.webp')} alt="Mug Printing" />
+                  <img src={getImage('/images/banners/printing-card1.webp')} alt="Mug printing sample" />
                 </div>
                 <p className="print-showcase-label">Mug Printing</p>
               </Link>
 
               <Link to="/products" className="print-showcase-card">
                 <div className="print-showcase-media">
-                  <img src={getImage('/images/banners/printing-card5.jpg')} alt="Visiting Cards Printing" />
+                  <img src={getImage('/images/banners/printing-card5.jpg')} alt="Visiting cards print sample" />
                 </div>
                 <p className="print-showcase-label">Visiting Cards Printing</p>
               </Link>
 
               <Link to="/products" className="print-showcase-card">
                 <div className="print-showcase-media">
-                  <img src={getImage('/images/banners/printing-card2.jpg')} alt="T-shirt Printing" />
+                  <img src={getImage('/images/banners/printing-card2.jpg')} alt="T-shirt printing sample" />
                 </div>
                 <p className="print-showcase-label">T-shirt Printing</p>
               </Link>
 
               <Link to="/products" className="print-showcase-card">
                 <div className="print-showcase-media">
-                  <img src={getImage('/images/banners/printing-card3.jpg')} alt="Photo Frame Printing" />
+                  <img src={getImage('/images/banners/printing-card3.jpg')} alt="Photo frame print sample" />
                 </div>
                 <p className="print-showcase-label">Photo Frame Printing</p>
               </Link>
 
               <Link to="/products" className="print-showcase-card">
                 <div className="print-showcase-media">
-                  <img src={getImage('/images/banners/Printing-card4.jpg')} alt="Wedding Card Printing" />
+                  <img src={getImage('/images/banners/Printing-card4.jpg')} alt="Wedding card print sample" />
                 </div>
                 <p className="print-showcase-label">Wedding Card Printing</p>
               </Link>
@@ -407,7 +369,7 @@ export default function Home1() {
             <div className="print-sell-grid">
               <div className="print-sell-card">
                 <div className="print-sell-media">
-                  <img src={getImage('/images/banners/printing/printing1.jpg')} alt="Printing 1" />
+                  <img src={getImage('/images/banners/printing/printing1.jpg')} alt="Printing product sample 1" />
                 </div>
                 <div className="print-sell-body">
                   <p className="print-sell-brand">Adidas</p>
@@ -422,7 +384,7 @@ export default function Home1() {
 
               <div className="print-sell-card">
                 <div className="print-sell-media">
-                  <img src={getImage('/images/banners/printing/printing2.jpg')} alt="Printing 2" />
+                  <img src={getImage('/images/banners/printing/printing2.jpg')} alt="Printing product sample 2" />
                 </div>
                 <div className="print-sell-body">
                   <p className="print-sell-brand">Adidas</p>
@@ -437,7 +399,7 @@ export default function Home1() {
 
               <div className="print-sell-card">
                 <div className="print-sell-media">
-                  <img src={getImage('/images/banners/printing/printing3.jpg')} alt="Printing 3" />
+                  <img src={getImage('/images/banners/printing/printing3.jpg')} alt="Printing product sample 3" />
                 </div>
                 <div className="print-sell-body">
                   <p className="print-sell-brand">Adidas</p>
@@ -452,7 +414,7 @@ export default function Home1() {
 
               <div className="print-sell-card">
                 <div className="print-sell-media">
-                  <img src={getImage('/images/banners/printing/printing4.jpg')} alt="Printing 4" />
+                  <img src={getImage('/images/banners/printing/printing4.jpg')} alt="Printing product sample 4" />
                 </div>
                 <div className="print-sell-body">
                   <p className="print-sell-brand">Adidas</p>
@@ -467,7 +429,7 @@ export default function Home1() {
 
               <div className="print-sell-card">
                 <div className="print-sell-media">
-                  <img src={getImage('/images/banners/printing/printing5.jpg')} alt="Printing 5" />
+                  <img src={getImage('/images/banners/printing/printing5.jpg')} alt="Printing product sample 5" />
                 </div>
                 <div className="print-sell-body">
                   <p className="print-sell-brand">Adidas</p>
@@ -482,7 +444,7 @@ export default function Home1() {
 
               <div className="print-sell-card">
                 <div className="print-sell-media">
-                  <img src={getImage('/images/banners/printing/printing6.jpg')} alt="Printing 6" />
+                  <img src={getImage('/images/banners/printing/printing6.jpg')} alt="Printing product sample 6" />
                 </div>
                 <div className="print-sell-body">
                   <p className="print-sell-brand">Adidas</p>
@@ -497,7 +459,7 @@ export default function Home1() {
 
               <div className="print-sell-card">
                 <div className="print-sell-media">
-                  <img src={getImage('/images/banners/printing/printing7.jpg')} alt="Printing 7" />
+                  <img src={getImage('/images/banners/printing/printing7.jpg')} alt="Printing product sample 7" />
                 </div>
                 <div className="print-sell-body">
                   <p className="print-sell-brand">Adidas</p>
@@ -512,7 +474,7 @@ export default function Home1() {
 
               <div className="print-sell-card">
                 <div className="print-sell-media">
-                  <img src={getImage('/images/banners/printing/printing8.jpg')} alt="Printing 8" />
+                  <img src={getImage('/images/banners/printing/printing8.jpg')} alt="Printing product sample 8" />
                 </div>
                 <div className="print-sell-body">
                   <p className="print-sell-brand">Adidas</p>
@@ -528,9 +490,6 @@ export default function Home1() {
           </div>
         </section>
 
-
-
-
         <section className="stationary-sale-section">
           <div className="stationary-sale-inner">
             <div className="stationary-sale-head">
@@ -542,54 +501,53 @@ export default function Home1() {
               <div className="stationary-sale-grid">
                 <Link to="/products" className="stationary-sale-card">
                   <div className="stationary-sale-media">
-                    <img src={getImage('/images/banners/stationary1.jpg')} alt="Key Chains" />
+                    <img src={getImage('/images/banners/stationary1.jpg')} alt="Key chains product" />
                   </div>
                   <p className="stationary-sale-text">Key Chains</p>
                 </Link>
 
                 <Link to="/products" className="stationary-sale-card">
                   <div className="stationary-sale-media">
-                    <img src={getImage('/images/banners/stationary2.jpg')} alt="Pens" />
+                    <img src={getImage('/images/banners/stationary2.jpg')} alt="Pens product" />
                   </div>
                   <p className="stationary-sale-text">Pens</p>
                 </Link>
 
                 <Link to="/products" className="stationary-sale-card">
                   <div className="stationary-sale-media">
-                    <img src={getImage('/images/banners/stationary3.jpg')} alt="Books" />
+                    <img src={getImage('/images/banners/stationary3.jpg')} alt="Books product" />
                   </div>
                   <p className="stationary-sale-text">Books</p>
                 </Link>
 
                 <Link to="/products" className="stationary-sale-card">
                   <div className="stationary-sale-media">
-                    <img src={getImage('/images/banners/stationary4.jpg')} alt="Diaries" />
+                    <img src={getImage('/images/banners/stationary4.jpg')} alt="Diaries product" />
                   </div>
                   <p className="stationary-sale-text">Diaries</p>
                 </Link>
 
                 <Link to="/products" className="stationary-sale-card">
                   <div className="stationary-sale-media">
-                    <img src={getImage('/images/banners/stationary5.jpg')} alt="Pouches" />
+                    <img src={getImage('/images/banners/stationary5.jpg')} alt="Pouches product" />
                   </div>
                   <p className="stationary-sale-text">Pouches</p>
                 </Link>
 
                 <Link to="/products" className="stationary-sale-card">
                   <div className="stationary-sale-media">
-                    <img src={getImage('/images/banners/stationary6.jpg')} alt="Shopping Covers" />
+                    <img src={getImage('/images/banners/stationary6.jpg')} alt="Shopping covers product" />
                   </div>
                   <p className="stationary-sale-text">Shopping Covers</p>
                 </Link>
               </div>
 
               <div className="stationary-sale-banner">
-                <img src={getImage('/images/banners/stationary.jpg')} alt="Stationary Banner" />
+                <img src={getImage('/images/banners/stationary.jpg')} alt="Stationary collection banner" />
               </div>
             </div>
           </div>
         </section>
-
 
         <section className="stationary-sell-section">
           <div className="stationary-sell-inner">
@@ -601,7 +559,7 @@ export default function Home1() {
             <div className="stationary-sell-grid">
               <div className="stationary-sell-card">
                 <div className="stationary-sell-media">
-                  <img src={getImage('/images/banners/stationary/stationary1.jpg')} alt="Stationary 1" />
+                  <img src={getImage('/images/banners/stationary/stationary1.jpg')} alt="Stationary product sample 1" />
                 </div>
                 <div className="stationary-sell-body">
                   <p className="stationary-sell-brand">Reebook</p>
@@ -616,7 +574,7 @@ export default function Home1() {
 
               <div className="stationary-sell-card">
                 <div className="stationary-sell-media">
-                  <img src={getImage('/images/banners/stationary/stationary2.jpg')} alt="Stationary 2" />
+                  <img src={getImage('/images/banners/stationary/stationary2.jpg')} alt="Stationary product sample 2" />
                 </div>
                 <div className="stationary-sell-body">
                   <p className="stationary-sell-brand">Reebook</p>
@@ -631,7 +589,7 @@ export default function Home1() {
 
               <div className="stationary-sell-card">
                 <div className="stationary-sell-media">
-                  <img src={getImage('/images/banners/stationary/stationary3.jpg')} alt="Stationary 3" />
+                  <img src={getImage('/images/banners/stationary/stationary3.jpg')} alt="Stationary product sample 3" />
                 </div>
                 <div className="stationary-sell-body">
                   <p className="stationary-sell-brand">Reebook</p>
@@ -646,7 +604,7 @@ export default function Home1() {
 
               <div className="stationary-sell-card">
                 <div className="stationary-sell-media">
-                  <img src={getImage('/images/banners/stationary/stationary4.jpg')} alt="Stationary 4" />
+                  <img src={getImage('/images/banners/stationary/stationary4.jpg')} alt="Stationary product sample 4" />
                 </div>
                 <div className="stationary-sell-body">
                   <p className="stationary-sell-brand">Reebook</p>
@@ -661,7 +619,7 @@ export default function Home1() {
 
               <div className="stationary-sell-card">
                 <div className="stationary-sell-media">
-                  <img src={getImage('/images/banners/stationary/stationary5.jpg')} alt="Stationary 5" />
+                  <img src={getImage('/images/banners/stationary/stationary5.jpg')} alt="Stationary product sample 5" />
                 </div>
                 <div className="stationary-sell-body">
                   <p className="stationary-sell-brand">Reebook</p>
@@ -676,7 +634,7 @@ export default function Home1() {
 
               <div className="stationary-sell-card">
                 <div className="stationary-sell-media">
-                  <img src={getImage('/images/banners/stationary/stationary6.jpg')} alt="Stationary 6" />
+                  <img src={getImage('/images/banners/stationary/stationary6.jpg')} alt="Stationary product sample 6" />
                 </div>
                 <div className="stationary-sell-body">
                   <p className="stationary-sell-brand">Reebook</p>
@@ -691,7 +649,7 @@ export default function Home1() {
 
               <div className="stationary-sell-card">
                 <div className="stationary-sell-media">
-                  <img src={getImage('/images/banners/stationary/stationary7.jpg')} alt="Stationary 7" />
+                  <img src={getImage('/images/banners/stationary/stationary7.jpg')} alt="Stationary product sample 7" />
                 </div>
                 <div className="stationary-sell-body">
                   <p className="stationary-sell-brand">Reebook</p>
@@ -706,7 +664,7 @@ export default function Home1() {
 
               <div className="stationary-sell-card">
                 <div className="stationary-sell-media">
-                  <img src={getImage('/images/banners/stationary/stationary8.jpg')} alt="Stationary 8" />
+                  <img src={getImage('/images/banners/stationary/stationary8.jpg')} alt="Stationary product sample 8" />
                 </div>
                 <div className="stationary-sell-body">
                   <p className="stationary-sell-brand">Reebook</p>
@@ -722,9 +680,6 @@ export default function Home1() {
           </div>
         </section>
 
-
-
-
         <section className="school-items-section">
           <div className="school-items-inner">
             <h2 className="school-items-title">School Items</h2>
@@ -733,43 +688,41 @@ export default function Home1() {
             <div className="school-items-grid">
               <Link to="/products" className="school-items-card">
                 <div className="school-items-media">
-                  <img src={getImage('/images/banners/school1.jpg')} alt="Id Cards" />
+                  <img src={getImage('/images/banners/school1.jpg')} alt="ID cards for schools" />
                 </div>
                 <p className="school-items-label">Id Cards</p>
               </Link>
 
               <Link to="/products" className="school-items-card">
                 <div className="school-items-media">
-                  <img src={getImage('/images/banners/school2.jpg')} alt="Diaries" />
+                  <img src={getImage('/images/banners/school2.jpg')} alt="Student diaries" />
                 </div>
                 <p className="school-items-label">Diaries</p>
               </Link>
 
               <Link to="/products" className="school-items-card">
                 <div className="school-items-media">
-                  <img src={getImage('/images/banners/school3.jpg')} alt="Progress Cards" />
+                  <img src={getImage('/images/banners/school3.jpg')} alt="School progress cards" />
                 </div>
                 <p className="school-items-label">Progress Cards</p>
               </Link>
 
               <Link to="/products" className="school-items-card">
                 <div className="school-items-media">
-                  <img src={getImage('/images/banners/school4.jpg')} alt="Ties & Belts" />
+                  <img src={getImage('/images/banners/school4.jpg')} alt="School ties and belts" />
                 </div>
                 <p className="school-items-label">Ties &amp; Belts</p>
               </Link>
 
               <Link to="/products" className="school-items-card">
                 <div className="school-items-media">
-                  <img src={getImage('/images/banners/school5.jpg')} alt="Prizes and Medals" />
+                  <img src={getImage('/images/banners/school5.jpg')} alt="School prizes and medals" />
                 </div>
                 <p className="school-items-label">Prizes and Medals</p>
               </Link>
             </div>
           </div>
         </section>
-
-
 
         <section className="school-sell-section">
           <div className="school-sell-inner">
@@ -781,7 +734,7 @@ export default function Home1() {
             <div className="school-sell-grid">
               <div className="school-sell-card">
                 <div className="school-sell-media">
-                  <img src={getImage('/images/banners/school/school1.jpg')} alt="School Item 1" />
+                  <img src={getImage('/images/banners/school/school1.jpg')} alt="School essentials product 1" />
                 </div>
                 <div className="school-sell-body">
                   <p className="school-sell-brand">Red Tape</p>
@@ -796,7 +749,7 @@ export default function Home1() {
 
               <div className="school-sell-card">
                 <div className="school-sell-media">
-                  <img src={getImage('/images/banners/school/school2.jpg')} alt="School Item 2" />
+                  <img src={getImage('/images/banners/school/school2.jpg')} alt="School essentials product 2" />
                 </div>
                 <div className="school-sell-body">
                   <p className="school-sell-brand">Red Tape</p>
@@ -811,7 +764,7 @@ export default function Home1() {
 
               <div className="school-sell-card">
                 <div className="school-sell-media">
-                  <img src={getImage('/images/banners/school/school3.jpg')} alt="School Item 3" />
+                  <img src={getImage('/images/banners/school/school3.jpg')} alt="School essentials product 3" />
                 </div>
                 <div className="school-sell-body">
                   <p className="school-sell-brand">Red Tape</p>
@@ -826,7 +779,7 @@ export default function Home1() {
 
               <div className="school-sell-card">
                 <div className="school-sell-media">
-                  <img src={getImage('/images/banners/school/school4.jpg')} alt="School Item 4" />
+                  <img src={getImage('/images/banners/school/school4.jpg')} alt="School essentials product 4" />
                 </div>
                 <div className="school-sell-body">
                   <p className="school-sell-brand">Red Tape</p>
@@ -841,7 +794,7 @@ export default function Home1() {
 
               <div className="school-sell-card">
                 <div className="school-sell-media">
-                  <img src={getImage('/images/banners/school/school5.jpg')} alt="School Item 5" />
+                  <img src={getImage('/images/banners/school/school5.jpg')} alt="School essentials product 5" />
                 </div>
                 <div className="school-sell-body">
                   <p className="school-sell-brand">Red Tape</p>
@@ -856,7 +809,7 @@ export default function Home1() {
 
               <div className="school-sell-card">
                 <div className="school-sell-media">
-                  <img src={getImage('/images/banners/school/school6.jpg')} alt="School Item 6" />
+                  <img src={getImage('/images/banners/school/school6.jpg')} alt="School essentials product 6" />
                 </div>
                 <div className="school-sell-body">
                   <p className="school-sell-brand">Red Tape</p>
@@ -871,7 +824,7 @@ export default function Home1() {
 
               <div className="school-sell-card">
                 <div className="school-sell-media">
-                  <img src={getImage('/images/banners/school/school7.jpg')} alt="School Item 7" />
+                  <img src={getImage('/images/banners/school/school7.jpg')} alt="School essentials product 7" />
                 </div>
                 <div className="school-sell-body">
                   <p className="school-sell-brand">Red Tape</p>
@@ -886,7 +839,7 @@ export default function Home1() {
 
               <div className="school-sell-card">
                 <div className="school-sell-media">
-                  <img src={getImage('/images/banners/school/school8.jpg')} alt="School Item 8" />
+                  <img src={getImage('/images/banners/school/school8.jpg')} alt="School essentials product 8" />
                 </div>
                 <div className="school-sell-body">
                   <p className="school-sell-brand">Red Tape</p>
@@ -901,15 +854,6 @@ export default function Home1() {
             </div>
           </div>
         </section>
-
-
-
-
-
-
-
-
-
       </div>
       <Footer />
     </div>
