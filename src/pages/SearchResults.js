@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { FaHeart, FaRegHeart } from 'react-icons/fa'
 import Navbar from './Navbar'
@@ -8,12 +8,12 @@ import './SearchResults.css'
 import './WomenDisplayPage.css'
 import { useWishlist } from '../WishlistContext'
 
-const DEFAULT_API_BASE = 'http://localhost:5000'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = String(API_BASE_RAW || '').replace(/\/+$/, '')
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
 const categories = [
   'T-SHIRTS & CAPS',
@@ -65,11 +65,7 @@ const buildTokens = (text) => {
 
 const textMatchesProduct = (tokens, product) => {
   if (!tokens.length) return true
-  const fields = [
-    normalizeText(product.product_name),
-    normalizeText(product.brand),
-    normalizeText(product.category)
-  ]
+  const fields = [normalizeText(product.product_name), normalizeText(product.brand), normalizeText(product.category)]
   return tokens.every((t) => fields.some((f) => f && f.includes(t)))
 }
 
@@ -87,14 +83,10 @@ const SearchResults = () => {
   const query = new URLSearchParams(location.search).get('q') || ''
 
   const userType = (localStorage.getItem('userType') || sessionStorage.getItem('userType') || 'B2C').toUpperCase()
-  const userId =
-    (typeof window !== 'undefined' && (sessionStorage.getItem('userId') || localStorage.getItem('userId'))) || null
+  const userId = (typeof window !== 'undefined' && (sessionStorage.getItem('userId') || localStorage.getItem('userId'))) || null
 
-  const offerPrice = (p) =>
-    Number(userType === 'B2B' ? p.b2b_final_price ?? 0 : p.b2c_final_price ?? 0) || 0
-
-  const originalPrice = (p) =>
-    Number(userType === 'B2B' ? p.b2b_actual_price ?? 0 : p.b2c_actual_price ?? 0) || 0
+  const offerPrice = (p) => Number((userType === 'B2B' ? p.b2b_final_price : p.b2c_final_price) ?? 0) || 0
+  const originalPrice = (p) => Number((userType === 'B2B' ? p.b2b_actual_price : p.b2c_actual_price) ?? 0) || 0
 
   const discountPctValue = (p) => {
     const o = originalPrice(p)
@@ -115,8 +107,7 @@ const SearchResults = () => {
 
   const applyLocalSearch = (all, q) => {
     const tokens = buildTokens(q)
-    const filtered = (all || []).filter((p) => textMatchesProduct(tokens, p))
-    return filtered
+    return (all || []).filter((p) => textMatchesProduct(tokens, p))
   }
 
   useEffect(() => {
@@ -130,8 +121,7 @@ const SearchResults = () => {
         const arr = Array.isArray(data) ? data : []
         if (!cancelled) {
           setBaseResults(arr)
-          const filtered = applyLocalSearch(arr, query)
-          setResults(filtered)
+          setResults(applyLocalSearch(arr, query))
         }
       } catch {
         if (!cancelled) {
@@ -146,11 +136,10 @@ const SearchResults = () => {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [query])
 
   useEffect(() => {
-    const filtered = applyLocalSearch(baseResults, query)
-    setResults(filtered)
+    setResults(applyLocalSearch(baseResults, query))
   }, [query, baseResults])
 
   const suggestAbortRef = useRef(null)
@@ -166,9 +155,7 @@ const SearchResults = () => {
       return
     }
 
-    const localMatches = categories
-      .filter((c) => normalizeText(c).includes(normalizeText(v)))
-      .slice(0, 12)
+    const localMatches = categories.filter((c) => normalizeText(c).includes(normalizeText(v))).slice(0, 12)
 
     suggestTimerRef.current = setTimeout(async () => {
       const controller = new AbortController()
