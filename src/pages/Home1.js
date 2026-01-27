@@ -94,7 +94,7 @@ export default function Home1() {
 
               <Link to="/products" className="cat-card-new-home">
                 <div className="cat-media-new-home">
-                  <img src={getImage('/images/banners/photo-printing.webp')} alt="Photo print category" />
+                  <img src={getImage('/images/banners/photo-printing.webp')} alt="Printing service" />
                 </div>
                 <p className="cat-label-new-home">Photo Printing</p>
               </Link>
@@ -207,7 +207,7 @@ export default function Home1() {
 
               <Link to="/products" className="split-right-card">
                 <div className="split-right-media">
-                  <img src={getImage('/images/banners/photo-printing.webp')} alt="Photo print sample" />
+                  <img src={getImage('/images/banners/photo-printing.webp')} alt="Frame printing" />
                 </div>
                 <p className="split-right-text">Photo Printing</p>
               </Link>
@@ -344,7 +344,7 @@ export default function Home1() {
 
               <Link to="/products" className="print-showcase-card">
                 <div className="print-showcase-media">
-                  <img src={getImage('/images/banners/printing-card3.jpg')} alt="Photo frame print sample" />
+                  <img src={getImage('/images/banners/printing-card3.jpg')} alt="Stationery banner" />
                 </div>
                 <p className="print-showcase-label">Photo Frame Printing</p>
               </Link>
