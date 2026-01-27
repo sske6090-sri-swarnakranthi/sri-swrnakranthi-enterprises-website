@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import { useCart } from '../CartContext'
@@ -43,7 +43,7 @@ const getOffer = (row) => Number(row?.discounted_price ?? row?.offer ?? row?.pri
 const Cart = () => {
   const navigate = useNavigate()
   const { addToWishlist } = useWishlist()
-  const { removeFromCart } = useCart()
+  const { removeFromCart, fetchCartItems: fetchCartItemsFromCtx } = useCart()
 
   const [cartItems, setCartItems] = useState([])
   const [showPopup, setShowPopup] = useState(false)
@@ -83,13 +83,13 @@ const Cart = () => {
 
   const fmt = (n) => Number(n || 0).toFixed(2)
 
-  const getItemPricing = (item) => {
+  const getItemPricing = useCallback((item) => {
     const mrp = getMrp(item)
     const offer = getOffer(item) || mrp
     return { mrp, offer }
-  }
+  }, [])
 
-  const normalizeCartRow = (row) => {
+  const normalizeCartRow = useCallback((row) => {
     const image = row?.image_url || pickImage(row?.images)
     return {
       id: row?.cart_id ?? row?.id,
@@ -109,9 +109,9 @@ const Cart = () => {
       image_url: image,
       created_at: row?.created_at
     }
-  }
+  }, [])
 
-  const fetchCartItems = async () => {
+  const fetchCartItems = useCallback(async () => {
     if (!userId || !isIntId(userId)) {
       setCartItems([])
       setQuantities({})
@@ -145,12 +145,12 @@ const Cart = () => {
     } finally {
       setLoading(false)
     }
-  }
+  }, [normalizeCartRow, userId])
 
   useEffect(() => {
     if (typeof window !== 'undefined') window.scrollTo(0, 0)
     fetchCartItems()
-  }, [userId])
+  }, [fetchCartItems])
 
   const handleRemoveClick = (item) => {
     setSelectedItem(item)
@@ -187,7 +187,15 @@ const Cart = () => {
       })
 
       setCartItems((prev) => prev.filter((it) => String(it.cart_id) !== String(selectedItem.cart_id)))
-      removeFromCart(selectedItem.cart_id)
+
+      try {
+        await removeFromCart(selectedItem.cart_id)
+      } catch {}
+
+      try {
+        if (typeof fetchCartItemsFromCtx === 'function') await fetchCartItemsFromCtx()
+      } catch {}
+
       setToast('Item removed')
       setTimeout(() => setToast(''), 1600)
     }
@@ -225,7 +233,7 @@ const Cart = () => {
       const { mrp } = getItemPricing(item)
       return total + mrp * qty
     }, 0)
-  }, [cartItems, quantities])
+  }, [cartItems, quantities, getItemPricing])
 
   const discountTotal = useMemo(() => {
     return cartItems.reduce((total, item) => {
@@ -235,7 +243,7 @@ const Cart = () => {
       if (!mrp || offer >= mrp) return total
       return total + (mrp - offer) * qty
     }, 0)
-  }, [cartItems, quantities])
+  }, [cartItems, quantities, getItemPricing])
 
   const subTotalBeforeCoupon = bagTotal - discountTotal
   const couponDiscount = (subTotalBeforeCoupon * couponDiscountPct) / 100
@@ -288,7 +296,7 @@ const Cart = () => {
           </div>
         ) : cartItems.length === 0 ? (
           <div className="cart-empty">
-            <img src="/images/emptyWishlist.avif" alt="Empty Cart" />
+            <img src="/images/emptyWishlist.avif" alt="Empty cart" />
             <h2>Your Bag is empty</h2>
             <p>Add items to your bag to view them here.</p>
             <a className="btn-shop" href="/">
@@ -320,7 +328,7 @@ const Cart = () => {
                       </button>
 
                       <div className="card-media">
-                        <img src={item.image_url} alt={name} />
+                        <img src={item.image_url} alt={name || 'Product'} />
                       </div>
 
                       <div className="card-body">
@@ -330,17 +338,10 @@ const Cart = () => {
                         </div>
 
                         <div className="card-opts">
-                          {item.variant ? (
-                            <div className="opt">
-                              <span className="opt-label">Variant</span>
-                              <span className="select">{item.variant}</span>
-                            </div>
-                          ) : (
-                            <div className="opt">
-                              <span className="opt-label">Variant</span>
-                              <span className="select">-</span>
-                            </div>
-                          )}
+                          <div className="opt">
+                            <span className="opt-label">Variant</span>
+                            <span className="select">{item.variant ? item.variant : '-'}</span>
+                          </div>
 
                           <div className="opt">
                             <span className="opt-label">Qty</span>
