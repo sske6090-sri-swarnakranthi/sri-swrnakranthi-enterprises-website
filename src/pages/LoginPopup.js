@@ -1,5 +1,4 @@
-// D:\gifts-website\src\pages\LoginPopup.js
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import { FaGoogle } from 'react-icons/fa'
 import { FiX, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 import './LoginPopup.css'
@@ -34,6 +33,7 @@ function persistSession(payload = {}) {
 export default function LoginPopup({ onClose, onSuccess }) {
   const popupRef = useRef(null)
   const emailRef = useRef(null)
+  const msgTimerRef = useRef(null)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -43,37 +43,19 @@ export default function LoginPopup({ onClose, onSuccess }) {
   const [showForgot, setShowForgot] = useState(false)
   const [showSignup, setShowSignup] = useState(false)
 
-  const validEmail = (v) => /^\S+@\S+\.\S+$/.test(v)
-  const canSubmit = validEmail(email) && password && !loading
+  const validEmail = useCallback((v) => /^\S+@\S+\.\S+$/.test(v), [])
 
-  const setMsg = (m) => {
+  const setMsg = useCallback((m) => {
     setPopupMessage(m)
-    setTimeout(() => setPopupMessage(''), 2200)
-  }
+    if (msgTimerRef.current) clearTimeout(msgTimerRef.current)
+    msgTimerRef.current = setTimeout(() => setPopupMessage(''), 2200)
+  }, [])
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (showForgot || showSignup) return
-      if (popupRef.current && !popupRef.current.contains(e.target)) onClose && onClose()
-    }
-    const onKey = (e) => {
-      if (showForgot || showSignup) return
-      if (e.key === 'Escape') onClose && onClose()
-      if (e.key === 'Enter') handleLogin()
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('keydown', onKey)
-    document.body.style.overflow = 'hidden'
-    emailRef.current?.focus()
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
-    }
-  }, [showForgot, showSignup, onClose])
-
-  const handleLogin = async () => {
+  const handleLogin = useCallback(async () => {
+    const emailOk = validEmail(email)
+    const canSubmit = emailOk && !!password && !loading
     if (!canSubmit) return
+
     setLoading(true)
     try {
       const resp = await fetch(`${API_BASE}/api/user/login`, {
@@ -81,11 +63,14 @@ export default function LoginPopup({ onClose, onSuccess }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: email.trim(), password })
       })
-      const data = await resp.json()
+
+      const data = await resp.json().catch(() => ({}))
+
       if (!resp.ok) {
         setMsg(data?.message || 'Invalid email or password')
         return
       }
+
       const persisted = persistSession(data)
       setPopupMessage('Successfully Logged In!')
       setTimeout(() => {
@@ -97,11 +82,38 @@ export default function LoginPopup({ onClose, onSuccess }) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [email, password, loading, validEmail, setMsg, onSuccess])
 
-  const loginWithGoogle = () => {
+  const loginWithGoogle = useCallback(() => {
     setMsg('Google login will be added later')
-  }
+  }, [setMsg])
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (showForgot || showSignup) return
+      if (popupRef.current && !popupRef.current.contains(e.target)) onClose && onClose()
+    }
+
+    const onKey = (e) => {
+      if (showForgot || showSignup) return
+      if (e.key === 'Escape') onClose && onClose()
+      if (e.key === 'Enter') handleLogin()
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    document.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    emailRef.current?.focus()
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+      if (msgTimerRef.current) clearTimeout(msgTimerRef.current)
+    }
+  }, [showForgot, showSignup, onClose, handleLogin])
+
+  const canSubmit = validEmail(email) && password && !loading
 
   return (
     <>
@@ -142,7 +154,7 @@ export default function LoginPopup({ onClose, onSuccess }) {
                 placeholder="Password"
                 autoComplete="current-password"
               />
-              <button type="button" className="eye-login" onClick={() => setShowPwd((v) => !v)}>
+              <button type="button" className="eye-login" onClick={() => setShowPwd((v) => !v)} aria-label="Toggle password visibility">
                 {showPwd ? <FiEyeOff /> : <FiEye />}
               </button>
             </div>
@@ -171,14 +183,14 @@ export default function LoginPopup({ onClose, onSuccess }) {
           </div>
 
           <div className="social-grid-login">
-            <button className="btn-google-login" onClick={loginWithGoogle}>
+            <button className="btn-google-login" onClick={loginWithGoogle} type="button">
               <FaGoogle /> Google
             </button>
           </div>
 
           <p className="signup-login">
             Don’t have an account{' '}
-            <button className="signup-link-login" onClick={() => setShowSignup(true)}>
+            <button className="signup-link-login" onClick={() => setShowSignup(true)} type="button">
               Sign up
             </button>
           </p>
