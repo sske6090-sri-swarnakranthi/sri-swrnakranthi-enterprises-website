@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import { useCart } from '../CartContext'
@@ -14,6 +14,11 @@ const API_BASE_RAW =
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
 const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
+
+const getStored = (key, fallback = '') => {
+  if (typeof window === 'undefined') return fallback
+  return sessionStorage.getItem(key) || localStorage.getItem(key) || fallback
+}
 
 const isIntId = (v) => {
   const n = Number(v)
@@ -57,29 +62,35 @@ const Cart = () => {
   const [showSuccess, setShowSuccess] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  const userId =
-    (typeof window !== 'undefined' ? sessionStorage.getItem('userId') : '') ||
-    (typeof window !== 'undefined' ? localStorage.getItem('userId') : '') ||
-    ''
+  const [userId, setUserId] = useState(() => getStored('userId', ''))
+  const [userType, setUserType] = useState(() => getStored('userType', 'B2C'))
 
-  const [userType, setUserType] = useState(() => {
-    if (typeof window === 'undefined') return 'B2C'
-    return sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'B2C'
-  })
+  const toastTimerRef = useRef(null)
 
   useEffect(() => {
-    const syncUserType = () => {
-      if (typeof window === 'undefined') return
-      const storedType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'B2C'
-      if (storedType !== userType) setUserType(storedType)
+    if (typeof window !== 'undefined') window.scrollTo(0, 0)
+  }, [])
+
+  useEffect(() => {
+    const syncFromStorage = () => {
+      const nextUserId = getStored('userId', '')
+      const nextUserType = getStored('userType', 'B2C')
+      setUserId((prev) => (prev === nextUserId ? prev : nextUserId))
+      setUserType((prev) => (prev === nextUserType ? prev : nextUserType))
     }
-    window.addEventListener('storage', syncUserType)
-    const interval = setInterval(syncUserType, 500)
+    window.addEventListener('storage', syncFromStorage)
+    window.addEventListener('focus', syncFromStorage)
     return () => {
-      window.removeEventListener('storage', syncUserType)
-      clearInterval(interval)
+      window.removeEventListener('storage', syncFromStorage)
+      window.removeEventListener('focus', syncFromStorage)
     }
-  }, [userType])
+  }, [])
+
+  const setToastSafe = useCallback((msg, ms = 1500) => {
+    setToast(msg)
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
+    toastTimerRef.current = setTimeout(() => setToast(''), ms)
+  }, [])
 
   const fmt = (n) => Number(n || 0).toFixed(2)
 
@@ -148,7 +159,6 @@ const Cart = () => {
   }, [normalizeCartRow, userId])
 
   useEffect(() => {
-    if (typeof window !== 'undefined') window.scrollTo(0, 0)
     fetchCartItems()
   }, [fetchCartItems])
 
@@ -161,16 +171,15 @@ const Cart = () => {
     const code = couponInput.trim().toUpperCase()
     if (code === 'BLUE10') {
       setCouponDiscountPct(10)
-      setToast('BLUE10 applied')
+      setToastSafe('BLUE10 applied', 1500)
     } else if (code === 'FREESHIP') {
       setCouponDiscountPct(0)
-      setToast('FREESHIP applied')
+      setToastSafe('FREESHIP applied', 1500)
     } else {
       setCouponDiscountPct(0)
-      setToast('Invalid coupon')
+      setToastSafe('Invalid coupon', 1500)
     }
     setShowCoupon(false)
-    setTimeout(() => setToast(''), 1500)
   }
 
   const handleConfirmRemove = async () => {
@@ -196,8 +205,7 @@ const Cart = () => {
         if (typeof fetchCartItemsFromCtx === 'function') await fetchCartItemsFromCtx()
       } catch {}
 
-      setToast('Item removed')
-      setTimeout(() => setToast(''), 1600)
+      setToastSafe('Item removed', 1600)
     }
     setShowPopup(false)
   }
@@ -222,8 +230,7 @@ const Cart = () => {
       })
     })
 
-    setToast('Quantity updated')
-    setTimeout(() => setToast(''), 1200)
+    setToastSafe('Quantity updated', 1200)
   }
 
   const bagTotal = useMemo(() => {
@@ -383,7 +390,7 @@ const Cart = () => {
                   </div>
                   <div className="sum-row">
                     <span>Discount on MRP</span>
-                    <span className="green">-₹{fmt(discountTotal)}</span>
+                    <span className="blue">-₹{fmt(discountTotal)}</span>
                   </div>
                   <div className="sum-row">
                     <span>Sub Total</span>
@@ -392,7 +399,7 @@ const Cart = () => {
                   {couponDiscountPct > 0 && (
                     <div className="sum-row">
                       <span>Coupon ({couponDiscountPct}%)</span>
-                      <span className="green">-₹{fmt(couponDiscount)}</span>
+                      <span className="blue">-₹{fmt(couponDiscount)}</span>
                     </div>
                   )}
                   <div className="sum-row opt-row">
@@ -470,8 +477,7 @@ const Cart = () => {
 
               setCartItems((prev) => prev.filter((i) => String(i.cart_id) !== String(selectedItem.cart_id)))
               setShowPopup(false)
-              setToast('Moved to wishlist')
-              setTimeout(() => setToast(''), 1500)
+              setToastSafe('Moved to wishlist', 1500)
             }}
           />
         )}

@@ -147,7 +147,6 @@ export default function SignupPopup({ onClose, onSuccess }) {
 
   const strengthLabel = ['Too weak', 'Weak', 'Fair', 'Strong', 'Strong'][strength]
   const strengthWidth = ['10%', '30%', '55%', '80%', '100%'][strength]
-  const strengthColor = ['#cc3333', '#2563eb', '#2563eb', '#2563eb', '#2563eb'][strength]
 
   return (
     <div className="signup-overlay" onMouseDown={handleOverlayMouseDown}>
@@ -212,13 +211,14 @@ export default function SignupPopup({ onClose, onSuccess }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
-              <button type="button" className="eye" onClick={() => setShowPwd((v) => !v)}>
+              <button type="button" className="eye" onClick={() => setShowPwd((v) => !v)} aria-label="Toggle password visibility">
                 {showPwd ? <FiEyeOff /> : <FiEye />}
               </button>
             </div>
 
             <div className="strength">
-              <div className="bar" style={{ width: strengthWidth, background: strengthColor }} />
+              <div className="track" />
+              <div className="bar" style={{ width: strengthWidth }} />
               <span className="s-label">{password ? strengthLabel : ''}</span>
             </div>
           </div>
@@ -234,7 +234,7 @@ export default function SignupPopup({ onClose, onSuccess }) {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
               />
-              <button type="button" className="eye" onClick={() => setShowConfirmPwd((v) => !v)}>
+              <button type="button" className="eye" onClick={() => setShowConfirmPwd((v) => !v)} aria-label="Toggle confirm password visibility">
                 {showConfirmPwd ? <FiEyeOff /> : <FiEye />}
               </button>
             </div>

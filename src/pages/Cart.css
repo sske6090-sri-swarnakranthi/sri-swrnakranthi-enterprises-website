@@ -1,27 +1,31 @@
 :root {
-  --bg: #070b16;
-  --black: #0a0a0a;
-  --black-2: #12182a;
   --white: #ffffff;
+  --black: #0b0f1a;
   --blue: #2f8cff;
   --blue2: #005eff;
-  --muted: rgba(255, 255, 255, 0.72);
-  --border: rgba(255, 255, 255, 0.12);
-  --glass: rgba(255, 255, 255, 0.06);
-  --shadow: 0 14px 32px rgba(0, 0, 0, 0.55);
-  --green: #10b981;
+
+  --text: var(--black);
+  --text-blue: var(--blue2);
+
+  --muted: rgba(11, 15, 26, 0.7);
+  --muted2: rgba(11, 15, 26, 0.55);
+
+  --blue-1: rgba(47, 140, 255, 0.10);
+  --blue-2: rgba(47, 140, 255, 0.16);
+  --blue-3: rgba(47, 140, 255, 0.26);
+
+  --border: rgba(47, 140, 255, 0.22);
+  --panel: rgba(255, 255, 255, 0.92);
+  --shadow: 0 14px 40px rgba(47, 140, 255, 0.14);
+  --radius: 16px;
 }
 
 .cart-wrap {
   min-height: 100vh;
-  color: var(--white);
-  background:
-    radial-gradient(900px 500px at -10% -20%, rgba(47, 140, 255, 0.14), transparent 60%),
-    radial-gradient(600px 400px at 110% -10%, rgba(255, 255, 255, 0.06), transparent 60%),
-    radial-gradient(2px 2px at 20% 30%, rgba(255, 255, 255, 0.5) 40%, transparent 41%) repeat,
-    radial-gradient(1.6px 1.6px at 70% 80%, rgba(255, 255, 255, 0.35) 40%, transparent 41%) repeat,
-    var(--black);
-  background-size: auto, auto, 240px 240px, 220px 220px, auto;
+  color: var(--text);
+  background: radial-gradient(900px 500px at -10% -20%, rgba(47, 140, 255, 0.18), transparent 60%),
+    radial-gradient(600px 400px at 110% -10%, rgba(47, 140, 255, 0.10), transparent 60%),
+    var(--white);
   padding-bottom: 84px;
 }
 
@@ -34,6 +38,7 @@
 .cart-empty {
   text-align: center;
   padding: 64px 0 90px;
+  color: var(--text);
 }
 
 .cart-empty img {
@@ -41,15 +46,17 @@
   max-width: 65vw;
   display: block;
   margin: 0 auto 14px;
+  filter: drop-shadow(0 10px 22px rgba(47, 140, 255, 0.18));
 }
 
 .cart-empty h2 {
   margin: 8px 0 6px;
-  color: var(--white);
+  color: var(--text);
 }
 
 .cart-empty p {
-  color: var(--muted);
+  color: var(--black);
+  opacity: 0.75;
   margin-bottom: 14px;
 }
 
@@ -61,16 +68,17 @@
   color: var(--white);
   font-weight: 900;
   box-shadow: 0 10px 26px rgba(47, 140, 255, 0.25);
+  text-decoration: none;
 }
 
 .progress-free {
   border: 1px solid rgba(47, 140, 255, 0.35);
-  background: rgba(47, 140, 255, 0.12);
-  color: rgba(201, 225, 255, 0.92);
+  background: rgba(47, 140, 255, 0.10);
+  color: var(--text);
   border-radius: 14px;
   padding: 10px 12px;
   margin-bottom: 16px;
-  font-weight: 800;
+  font-weight: 900;
 }
 
 .cart-grid {
@@ -80,7 +88,7 @@
 }
 
 .cart-left {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 16px;
@@ -88,6 +96,7 @@
   backdrop-filter: blur(10px);
   max-height: 680px;
   overflow: auto;
+  color: var(--text);
 }
 
 .cart-left::-webkit-scrollbar {
@@ -104,12 +113,12 @@
 .cart-head h2 {
   font-size: 1.4rem;
   margin: 0;
-  color: var(--blue);
-  text-shadow: 0 0 18px rgba(47, 140, 255, 0.18);
+  color: var(--text-blue);
 }
 
 .cart-head span {
-  color: var(--muted);
+  color: var(--text);
+  opacity: 0.75;
   font-size: 0.95rem;
 }
 
@@ -122,14 +131,15 @@
   border-radius: 14px;
   padding: 12px;
   margin: 12px 0;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(47, 140, 255, 0.06);
   transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  color: var(--text);
 }
 
 .cart-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(47, 140, 255, 0.35);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+  border-color: rgba(47, 140, 255, 0.42);
+  box-shadow: 0 16px 36px rgba(47, 140, 255, 0.16);
 }
 
 .card-remove {
@@ -139,9 +149,9 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  border: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.75);
-  color: var(--white);
+  border: 1px solid rgba(47, 140, 255, 0.30);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--text-blue);
   display: grid;
   place-items: center;
   cursor: pointer;
@@ -152,7 +162,7 @@
   height: 170px;
   object-fit: cover;
   border-radius: 10px;
-  background: #000;
+  background: #ffffff;
 }
 
 .card-body {
@@ -165,12 +175,13 @@
 .card-top .brand {
   margin: 2px 0 2px;
   font-size: 1rem;
-  color: var(--white);
+  color: var(--text);
 }
 
 .card-top .name {
   margin: 0 0 6px;
-  color: var(--muted);
+  color: var(--text);
+  opacity: 0.75;
   font-size: 0.95rem;
 }
 
@@ -189,24 +200,16 @@
 }
 
 .opt-label {
-  color: var(--muted);
+  color: var(--text);
+  opacity: 0.7;
   font-size: 0.9rem;
-}
-
-.color-dot {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  display: inline-block;
-  background: rgba(255, 255, 255, 0.14);
 }
 
 .select {
   padding: 7px 10px;
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid var(--border);
-  color: var(--white);
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(47, 140, 255, 0.25);
+  color: var(--text);
   border-radius: 10px;
   outline: none;
   font-size: 0.9rem;
@@ -220,9 +223,9 @@
 }
 
 .card-price .now {
-  font-weight: 700;
+  font-weight: 900;
   font-size: 1.1rem;
-  color: var(--white);
+  color: var(--text);
 }
 
 .card-price .was {
@@ -233,12 +236,13 @@
 
 .card-price .mrp {
   text-decoration: line-through;
-  color: rgba(255, 255, 255, 0.55);
-  font-weight: 700;
+  color: var(--text);
+  opacity: 0.55;
+  font-weight: 800;
 }
 
 .card-price .off {
-  color: var(--green);
+  color: var(--text-blue);
   font-weight: 900;
   font-size: 0.95rem;
 }
@@ -262,31 +266,32 @@
 }
 
 .mini.blue {
-  color: var(--blue);
-  border-color: rgba(47, 140, 255, 0.5);
-  background: rgba(47, 140, 255, 0.08);
+  color: var(--text-blue);
+  border-color: rgba(47, 140, 255, 0.45);
+  background: rgba(47, 140, 255, 0.10);
 }
 
 .cart-right {
   position: sticky;
   top: 16px;
   height: fit-content;
+  color: var(--text);
 }
 
 .summary {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+  background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 18px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(10px);
+  color: var(--text);
 }
 
 .summary h3 {
   margin: 0 0 10px;
-  color: var(--blue);
+  color: var(--text-blue);
   font-size: 1.2rem;
-  text-shadow: 0 0 18px rgba(47, 140, 255, 0.18);
 }
 
 .sum-row {
@@ -294,6 +299,11 @@
   justify-content: space-between;
   margin: 10px 0;
   font-size: 0.98rem;
+  color: var(--text);
+}
+
+.sum-row span {
+  color: var(--text);
 }
 
 .sum-row.total {
@@ -301,7 +311,11 @@
   padding-top: 10px;
   border-top: 1px solid var(--border);
   font-weight: 900;
-  color: var(--white);
+  color: var(--text);
+}
+
+.sum-row.total span {
+  color: var(--text);
 }
 
 .opt-row {
@@ -312,7 +326,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--muted);
+  color: var(--text);
+  opacity: 0.8;
 }
 
 .chk input {
@@ -321,8 +336,9 @@
   height: 16px;
 }
 
-.green {
-  color: var(--green);
+.blue {
+  color: var(--text-blue);
+  font-weight: 900;
 }
 
 .save-note {
@@ -331,12 +347,16 @@
   gap: 8px;
   margin-top: 14px;
   background: rgba(47, 140, 255, 0.10);
-  color: rgba(201, 225, 255, 0.92);
+  color: var(--text);
   border: 1px solid rgba(47, 140, 255, 0.35);
   padding: 10px 12px;
   border-radius: 12px;
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 900;
+}
+
+.save-note span {
+  color: var(--text);
 }
 
 .btn-buy {
@@ -362,23 +382,23 @@
   inset: 0;
   display: grid;
   place-items: center;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(47, 140, 255, 0.18);
   z-index: 50;
 }
 
 .modal {
   width: min(92vw, 420px);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(47, 140, 255, 0.25);
   border-radius: 16px;
   padding: 16px;
   box-shadow: var(--shadow);
-  color: var(--white);
+  color: var(--text);
 }
 
 .modal h4 {
   margin: 0 0 10px;
-  color: var(--blue);
+  color: var(--text-blue);
 }
 
 .preset {
@@ -390,9 +410,9 @@
 .preset button {
   padding: 8px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(47, 140, 255, 0.5);
-  background: rgba(47, 140, 255, 0.08);
-  color: var(--blue);
+  border: 1px solid rgba(47, 140, 255, 0.45);
+  background: rgba(47, 140, 255, 0.10);
+  color: var(--text-blue);
   font-weight: 900;
   cursor: pointer;
 }
@@ -400,12 +420,17 @@
 .modal input {
   width: 100%;
   padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--white);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.98);
+  color: var(--text);
+  border: 1px solid rgba(47, 140, 255, 0.25);
   border-radius: 10px;
   outline: none;
   margin-top: 4px;
+}
+
+.modal input::placeholder {
+  color: var(--text);
+  opacity: 0.55;
 }
 
 .modal-actions {
@@ -425,8 +450,8 @@
 
 .btn.ghost {
   background: transparent;
-  color: var(--white);
-  border-color: var(--border);
+  color: var(--text-blue);
+  border-color: rgba(47, 140, 255, 0.35);
 }
 
 .btn.solid {
@@ -439,15 +464,15 @@
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.6);
-  border: 1px solid var(--border);
-  color: var(--white);
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(47, 140, 255, 0.25);
+  color: var(--text);
   padding: 10px 14px;
   border-radius: 12px;
   box-shadow: var(--shadow);
   z-index: 60;
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 900;
 }
 
 .sticky-bar {
@@ -459,21 +484,28 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: rgba(10, 10, 10, 0.92);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgba(47, 140, 255, 0.22);
   z-index: 40;
+  color: var(--text);
 }
 
 .sb-left {
   display: flex;
   gap: 8px;
   align-items: baseline;
-  color: var(--white);
+  color: var(--text);
 }
 
 .sb-left strong {
   font-size: 1.1rem;
+  color: var(--text);
+}
+
+.sb-left span {
+  color: var(--text);
+  opacity: 0.75;
 }
 
 .sb-btn {
@@ -488,12 +520,13 @@
 .modal.success .success-head {
   font-weight: 900;
   font-size: 1.2rem;
-  color: var(--blue);
+  color: var(--text-blue);
   margin-bottom: 6px;
 }
 
 .modal.success .success-sub {
-  color: var(--muted);
+  color: var(--text);
+  opacity: 0.75;
   margin: 0 0 6px;
   font-size: 0.95rem;
 }

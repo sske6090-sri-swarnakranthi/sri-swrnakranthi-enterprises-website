@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './Wishlist.css'
 import { useNavigate } from 'react-router-dom'
 import WishlistPopup from './WishlistPopup'
@@ -14,9 +14,9 @@ const API_BASE_RAW =
   DEFAULT_API_BASE
 const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
-const getUserId = () => {
-  if (typeof window === 'undefined') return ''
-  return sessionStorage.getItem('userId') || localStorage.getItem('userId') || ''
+const getStored = (key, fallback = '') => {
+  if (typeof window === 'undefined') return fallback
+  return sessionStorage.getItem(key) || localStorage.getItem(key) || fallback
 }
 
 const readWishlistLocal = (userId) => {
@@ -42,18 +42,25 @@ const toNum = (v) => {
   return Number.isFinite(n) ? n : 0
 }
 
+const buildSig = (arr) => {
+  if (!Array.isArray(arr)) return ''
+  return arr
+    .map((x) => String(x?.product_id ?? x?.id ?? ''))
+    .filter(Boolean)
+    .sort()
+    .join('|')
+}
+
 const Wishlist = () => {
   const { wishlistItems, setWishlistItems } = useWishlist()
   const [showPopup, setShowPopup] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [userType, setUserType] = useState(() => {
-    if (typeof window === 'undefined') return 'B2C'
-    return sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'B2C'
-  })
+  const [userType, setUserType] = useState(() => getStored('userType', 'B2C'))
+  const [userId, setUserId] = useState(() => getStored('userId', ''))
 
   const navigate = useNavigate()
-  const userId = getUserId()
+  const lastSigRef = useRef(buildSig(wishlistItems))
 
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -61,17 +68,19 @@ const Wishlist = () => {
   }, [])
 
   useEffect(() => {
-    const syncUserType = () => {
-      const storedType = sessionStorage.getItem('userType') || localStorage.getItem('userType') || 'B2C'
-      if (storedType !== userType) setUserType(storedType)
+    const syncFromStorage = () => {
+      const nextUserType = getStored('userType', 'B2C')
+      const nextUserId = getStored('userId', '')
+      setUserType((prev) => (prev === nextUserType ? prev : nextUserType))
+      setUserId((prev) => (prev === nextUserId ? prev : nextUserId))
     }
-    window.addEventListener('storage', syncUserType)
-    const interval = setInterval(syncUserType, 500)
+    window.addEventListener('storage', syncFromStorage)
+    window.addEventListener('focus', syncFromStorage)
     return () => {
-      window.removeEventListener('storage', syncUserType)
-      clearInterval(interval)
+      window.removeEventListener('storage', syncFromStorage)
+      window.removeEventListener('focus', syncFromStorage)
     }
-  }, [userType])
+  }, [])
 
   const normalizeWishlistItem = useCallback((row) => {
     const images = Array.isArray(row?.images) ? row.images : []
@@ -88,9 +97,19 @@ const Wishlist = () => {
     }
   }, [])
 
+  const safeSetWishlist = useCallback(
+    (nextArr) => {
+      const nextSig = buildSig(nextArr)
+      if (nextSig && nextSig === lastSigRef.current) return
+      lastSigRef.current = nextSig
+      setWishlistItems(nextArr)
+    },
+    [setWishlistItems]
+  )
+
   const loadWishlist = useCallback(async () => {
     if (!userId) {
-      setWishlistItems([])
+      safeSetWishlist([])
       setIsLoading(false)
       return
     }
@@ -100,15 +119,15 @@ const Wishlist = () => {
       const res = await fetch(`${API_BASE}/api/wishlist/${userId}`)
       const data = await res.json().catch(() => null)
       const arr = Array.isArray(data) ? data.map(normalizeWishlistItem) : []
-      setWishlistItems(arr)
+      safeSetWishlist(arr)
       writeWishlistLocal(userId, arr)
     } catch {
       const local = readWishlistLocal(userId).map(normalizeWishlistItem)
-      setWishlistItems(local)
+      safeSetWishlist(local)
     } finally {
       setIsLoading(false)
     }
-  }, [userId, setWishlistItems, normalizeWishlistItem])
+  }, [userId, normalizeWishlistItem, safeSetWishlist])
 
   useEffect(() => {
     loadWishlist()
@@ -118,11 +137,12 @@ const Wishlist = () => {
     const handler = (e) => {
       if (!userId) return
       const next = Array.isArray(e?.detail) ? e.detail : readWishlistLocal(userId)
-      setWishlistItems(next.map(normalizeWishlistItem))
+      const normalized = next.map(normalizeWishlistItem)
+      safeSetWishlist(normalized)
     }
     window.addEventListener('wishlist-local-updated', handler)
     return () => window.removeEventListener('wishlist-local-updated', handler)
-  }, [userId, setWishlistItems, normalizeWishlistItem])
+  }, [userId, normalizeWishlistItem, safeSetWishlist])
 
   const handleRemove = (item) => {
     setSelectedItem(item)
@@ -145,7 +165,7 @@ const Wishlist = () => {
       })
 
       const updated = wishlistItems.filter((it) => String(it.product_id || it.id) !== String(pid))
-      setWishlistItems(updated)
+      safeSetWishlist(updated)
       writeWishlistLocal(userId, updated)
 
       try {
@@ -154,15 +174,17 @@ const Wishlist = () => {
     } finally {
       setShowPopup(false)
     }
-  }, [userId, selectedItem, wishlistItems, setWishlistItems])
+  }, [userId, selectedItem, wishlistItems, safeSetWishlist])
 
   const fmt = (n) => Number(n || 0).toFixed(2)
 
-  const getItemPricing = (item) => {
+  const getItemPricing = useCallback((item) => {
     const mrp = toNum(item?.price)
     const offer = toNum(item?.discounted_price ?? item?.price)
     return { mrp, offer }
-  }
+  }, [])
+
+  const renderedItems = useMemo(() => wishlistItems || [], [wishlistItems])
 
   return (
     <div className="wishlist-page-wrap">
@@ -188,7 +210,7 @@ const Wishlist = () => {
             <div className="wishlist-loader" />
             <p>Loading your wishlist...</p>
           </div>
-        ) : wishlistItems.length === 0 ? (
+        ) : renderedItems.length === 0 ? (
           <div className="wishlist-empty">
             <img src="/images/emptyWishlist.avif" alt="Empty Wishlist" />
             <h2>No saved items yet</h2>
@@ -199,13 +221,14 @@ const Wishlist = () => {
           </div>
         ) : (
           <div className="wishlist-grid">
-            {wishlistItems.map((item, index) => {
+            {renderedItems.map((item, index) => {
               const { mrp, offer } = getItemPricing(item)
               const discountPct = mrp > 0 && offer < mrp ? Math.round(((mrp - offer) / mrp) * 100) : 0
               const displayName = item?.name ?? item?.product_name ?? ''
+              const key = String(item.product_id ?? item.id ?? index)
 
               return (
-                <div key={`${item.product_id ?? index}`} className="wishlist-card">
+                <div key={key} className="wishlist-card">
                   <div
                     className="wishlist-media"
                     onClick={() => {

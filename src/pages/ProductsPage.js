@@ -31,7 +31,7 @@ const writeWishlistLocal = (userId, list) => {
   if (!userId) return
   try {
     localStorage.setItem(`wishlist:local:${userId}`, JSON.stringify(list || []))
-  } catch {}
+  } catch { }
 }
 
 const isWished = (list, id) => list.some((x) => String(x?.product_id ?? x?.id) === String(id))
@@ -134,7 +134,7 @@ export default function ProductsPage() {
     if (!userId) {
       try {
         window.dispatchEvent(new CustomEvent('open-login'))
-      } catch {}
+      } catch { }
       return
     }
 
@@ -181,7 +181,7 @@ export default function ProductsPage() {
 
       try {
         window.dispatchEvent(new CustomEvent('wishlist-local-updated', { detail: next }))
-      } catch {}
+      } catch { }
     } catch {
     } finally {
       setBusyId('')

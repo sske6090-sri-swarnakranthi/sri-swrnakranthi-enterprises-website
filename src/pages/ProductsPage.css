@@ -262,6 +262,7 @@
 
 @media (max-width: 560px) {
   .pp-content {
+    margin-top: 50px;
     padding: 14px 12px 40px;
   }
 

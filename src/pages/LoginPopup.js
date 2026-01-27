@@ -33,6 +33,7 @@ function persistSession(payload = {}) {
 export default function LoginPopup({ onClose, onSuccess }) {
   const popupRef = useRef(null)
   const emailRef = useRef(null)
+  const passwordRef = useRef(null)
   const msgTimerRef = useRef(null)
 
   const [email, setEmail] = useState('')
@@ -53,8 +54,8 @@ export default function LoginPopup({ onClose, onSuccess }) {
 
   const handleLogin = useCallback(async () => {
     const emailOk = validEmail(email)
-    const canSubmit = emailOk && !!password && !loading
-    if (!canSubmit) return
+    const canSubmitNow = emailOk && !!password && !loading
+    if (!canSubmitNow) return
 
     setLoading(true)
     try {
@@ -84,9 +85,24 @@ export default function LoginPopup({ onClose, onSuccess }) {
     }
   }, [email, password, loading, validEmail, setMsg, onSuccess])
 
+  const handleLoginRef = useRef(handleLogin)
+  useEffect(() => {
+    handleLoginRef.current = handleLogin
+  }, [handleLogin])
+
   const loginWithGoogle = useCallback(() => {
     setMsg('Google login will be added later')
   }, [setMsg])
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    emailRef.current?.focus()
+
+    return () => {
+      document.body.style.overflow = ''
+      if (msgTimerRef.current) clearTimeout(msgTimerRef.current)
+    }
+  }, [])
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -97,21 +113,31 @@ export default function LoginPopup({ onClose, onSuccess }) {
     const onKey = (e) => {
       if (showForgot || showSignup) return
       if (e.key === 'Escape') onClose && onClose()
-      if (e.key === 'Enter') handleLogin()
+      if (e.key === 'Enter') handleLoginRef.current && handleLoginRef.current()
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     document.addEventListener('keydown', onKey)
-    document.body.style.overflow = 'hidden'
-    emailRef.current?.focus()
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside)
       document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = ''
-      if (msgTimerRef.current) clearTimeout(msgTimerRef.current)
     }
-  }, [showForgot, showSignup, onClose, handleLogin])
+  }, [showForgot, showSignup, onClose])
+
+  const onEmailKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      passwordRef.current?.focus()
+    }
+  }
+
+  const onPasswordKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleLoginRef.current && handleLoginRef.current()
+    }
+  }
 
   const canSubmit = validEmail(email) && password && !loading
 
@@ -138,8 +164,10 @@ export default function LoginPopup({ onClose, onSuccess }) {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onKeyDown={onEmailKeyDown}
                 placeholder="Email"
                 autoComplete="email"
+                inputMode="email"
               />
             </div>
 
@@ -148,13 +176,21 @@ export default function LoginPopup({ onClose, onSuccess }) {
                 <FiLock />
               </span>
               <input
+                ref={passwordRef}
                 type={showPwd ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={onPasswordKeyDown}
                 placeholder="Password"
                 autoComplete="current-password"
               />
-              <button type="button" className="eye-login" onClick={() => setShowPwd((v) => !v)} aria-label="Toggle password visibility">
+              <button
+                type="button"
+                className="eye-login"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => setShowPwd((v) => !v)}
+                aria-label="Toggle password visibility"
+              >
                 {showPwd ? <FiEyeOff /> : <FiEye />}
               </button>
             </div>

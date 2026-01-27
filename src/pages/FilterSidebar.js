@@ -72,6 +72,8 @@ const dedupeSort = (arr) =>
     a.localeCompare(b, undefined, { sensitivity: 'base' })
   )
 
+const titleCaseKey = (k) => String(k || '').replace(/_/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase())
+
 const FilterSidebar = ({ source = [], onFilterChange }) => {
   const [openSection, setOpenSection] = useState(null)
   const [selected, setSelected] = useState({})
@@ -172,12 +174,12 @@ const FilterSidebar = ({ source = [], onFilterChange }) => {
     const hasStockFacet = unionPool.some((p) => p.in_stock !== undefined || p.available_qty !== undefined)
 
     const map = {}
-    map['categories'] = categories
-    if (brands.length) map['brands'] = brands
-    map['price'] = priceBuckets.map((b) => b.label)
-    map['discount'] = discountThresholds.map((d) => d.label)
-    if (hasRating) map['rating'] = ratingThresholds.map((r) => r.label)
-    if (hasStockFacet) map['availability'] = ['In stock only']
+    map.categories = categories
+    if (brands.length) map.brands = brands
+    map.price = priceBuckets.map((b) => b.label)
+    map.discount = discountThresholds.map((d) => d.label)
+    if (hasRating) map.rating = ratingThresholds.map((r) => r.label)
+    if (hasStockFacet) map.availability = ['In stock only']
     return map
   }, [unionPool])
 
@@ -209,9 +211,7 @@ const FilterSidebar = ({ source = [], onFilterChange }) => {
 
     const selDiscLabels = filters.discount || []
     if (selDiscLabels.length) {
-      const mins = selDiscLabels
-        .map((lab) => discountThresholds.find((x) => x.label === lab)?.min || 0)
-        .filter((n) => n > 0)
+      const mins = selDiscDiscToMins(selDiscLabels)
       const need = mins.length ? Math.max(...mins) : 0
       if (need > 0) out = out.filter((p) => discountPct(p) >= need)
     }
@@ -243,6 +243,11 @@ const FilterSidebar = ({ source = [], onFilterChange }) => {
 
     return out
   }
+
+  const selDiscDiscToMins = (labels) =>
+    labels
+      .map((lab) => discountThresholds.find((x) => x.label === lab)?.min || 0)
+      .filter((n) => n > 0)
 
   const applySort = (data, key) => {
     if (!key || key === 'relevance') return data
@@ -350,22 +355,22 @@ const FilterSidebar = ({ source = [], onFilterChange }) => {
             <div className="filter-title-wrap">
               <FaFilter className="filter-icon" />
               <h4 className="filter-title">Filters</h4>
-              <div className="title-glow"></div>
             </div>
           </div>
 
-          <div className="chips" role="tablist">
+          <div className="chips" role="tablist" aria-label="Filter categories">
             {Object.keys(facets).map((key) => {
               const active = openSection === key
               const count = sectionCount(key)
               return (
                 <button
                   key={key}
+                  type="button"
                   className={`filter-chip ${active ? 'active' : ''}`}
                   aria-expanded={active}
                   onClick={() => openAndLoadPending(key)}
                 >
-                  <span className="chip-label">{key}</span>
+                  <span className="chip-label">{titleCaseKey(key)}</span>
                   {count > 0 && <span className="count-badge">{count}</span>}
                   <span className="chip-chevron">{active ? <FaChevronUp /> : <FaChevronDown />}</span>
                 </button>
@@ -374,7 +379,7 @@ const FilterSidebar = ({ source = [], onFilterChange }) => {
           </div>
 
           <div className="filter-actions">
-            <button className="reset-btn" onClick={resetAll}>
+            <button className="reset-btn" type="button" onClick={resetAll}>
               Reset
             </button>
           </div>
@@ -392,29 +397,36 @@ const FilterSidebar = ({ source = [], onFilterChange }) => {
         <div className={`filter-dropdown ${openSection ? 'open' : ''}`}>
           {openSection && (
             <>
+              <div className="dropdown-head">
+                <div className="dropdown-title">{titleCaseKey(openSection)}</div>
+                <div className="dropdown-actions">
+                  <button className="clear-btn" type="button" onClick={clearSection}>
+                    Clear
+                  </button>
+                  <button className="apply-btn" type="button" onClick={applyPending}>
+                    Apply
+                  </button>
+                </div>
+              </div>
+
               <ul className="filter-options horizontal">
                 {facets[openSection].map((item) => {
                   const checked = (pending[openSection] || []).includes(item)
                   return (
                     <li key={item}>
                       <label className="chk">
-                        <input type="checkbox" checked={checked} onChange={() => togglePending(openSection, item)} />
-                        <span className="box" />
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => togglePending(openSection, item)}
+                        />
+                        <span className="box" aria-hidden="true" />
                         <span className="txt">{item}</span>
                       </label>
                     </li>
                   )
                 })}
               </ul>
-              <div className="apply-row">
-                <button className="clear-btn" onClick={clearSection}>
-                  Clear
-                </button>
-                <div className="spacer" />
-                <button className="apply-btn" onClick={applyPending}>
-                  Apply
-                </button>
-              </div>
             </>
           )}
         </div>
