@@ -269,100 +269,117 @@ export default function CustomizationPage() {
     ctx.restore();
   };
 
-  const redraw = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+  const redraw = useCallback(() => {
+  const canvas = canvasRef.current;
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
-    const cw = canvas.width / dpr;
-    const ch = canvas.height / dpr;
+  const dpr = window.devicePixelRatio || 1;
+  const cw = canvas.width / dpr;
+  const ch = canvas.height / dpr;
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, cw, ch);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, cw, ch);
 
-    const baseImg = baseImgRef.current;
-    const overlayImg = overlayImgRef.current;
+  const baseImg = baseImgRef.current;
+  const overlayImg = overlayImgRef.current;
 
-    const baseRect = computeBaseRect(cw, ch, baseImg);
-    drawStateRef.current.baseRect = baseRect;
+  const baseRect = computeBaseRect(cw, ch, baseImg);
+  drawStateRef.current.baseRect = baseRect;
 
-    if (baseImg) {
-      ctx.drawImage(baseImg, baseRect.x, baseRect.y, baseRect.w, baseRect.h);
-    } else {
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, cw, ch);
-      ctx.fillStyle = "#1e6bff";
-      ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-      ctx.fillText("Preview unavailable", 16, 28);
-    }
+  if (baseImg) {
+    ctx.drawImage(baseImg, baseRect.x, baseRect.y, baseRect.w, baseRect.h);
+  } else {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, cw, ch);
+    ctx.fillStyle = "#1e6bff";
+    ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.fillText("Preview unavailable", 16, 28);
+  }
+
+  ctx.save();
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = "#1e6bff";
+  ctx.font = "800 26px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  ctx.rotate((-10 * Math.PI) / 180);
+  ctx.fillText("PREVIEW", -10, ch * 0.7);
+  ctx.restore();
+
+  if (settings.showGrid) drawGrid(ctx, baseRect);
+  if (settings.showSafeArea) drawSafeArea(ctx, baseRect);
+
+  if (overlayImg) {
+    const baseSize = Math.min(baseRect.w, baseRect.h);
+    const target = baseSize * 0.36 * settings.scale;
+
+    const ow = overlayImg.naturalWidth || overlayImg.width;
+    const oh = overlayImg.naturalHeight || overlayImg.height;
+    const ar = ow / oh;
+
+    let w = target;
+    let h = target;
+    if (ar >= 1) h = target / ar;
+    else w = target * ar;
+
+    const centerX = settings.snapCenter
+      ? baseRect.x + baseRect.w / 2
+      : baseRect.x + baseRect.w * (0.5 + settings.offsetX / 100);
+
+    const centerY = settings.snapCenter
+      ? baseRect.y + baseRect.h / 2
+      : baseRect.y + baseRect.h * (0.5 + settings.offsetY / 100);
 
     ctx.save();
-    ctx.globalAlpha = 0.12;
-    ctx.fillStyle = "#1e6bff";
-    ctx.font = "800 26px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-    ctx.rotate((-10 * Math.PI) / 180);
-    ctx.fillText("PREVIEW", -10, ch * 0.7);
-    ctx.restore();
+    ctx.globalAlpha = clamp(settings.opacity, 0, 1);
+    ctx.globalCompositeOperation = settings.blendMode;
 
-    if (settings.showGrid) drawGrid(ctx, baseRect);
-    if (settings.showSafeArea) drawSafeArea(ctx, baseRect);
+    const filter = [
+      `hue-rotate(${settings.hue}deg)`,
+      `saturate(${settings.saturate}%)`,
+      `brightness(${settings.brightness}%)`,
+      `contrast(${settings.contrast}%)`,
+      settings.blur > 0 ? `blur(${settings.blur}px)` : "",
+    ].filter(Boolean).join(" ");
 
-    if (overlayImg) {
-      const baseSize = Math.min(baseRect.w, baseRect.h);
-      const target = baseSize * 0.36 * settings.scale;
+    ctx.filter = filter;
 
-      const ow = overlayImg.naturalWidth || overlayImg.width;
-      const oh = overlayImg.naturalHeight || overlayImg.height;
-      const ar = ow / oh;
+    if (settings.shadow > 0) {
+      ctx.shadowColor = "rgba(30, 107, 255, 0.28)";
+      ctx.shadowBlur = settings.shadow;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = settings.shadow > 10 ? 2 : 1;
+    }
 
-      let w = target;
-      let h = target;
-      if (ar >= 1) h = target / ar;
-      else w = target * ar;
+    ctx.translate(centerX, centerY);
+    ctx.rotate((settings.rotate * Math.PI) / 180);
 
-      const centerX = settings.snapCenter
-        ? baseRect.x + baseRect.w / 2
-        : baseRect.x + baseRect.w * (0.5 + settings.offsetX / 100);
+    const sx = settings.flipX ? -1 : 1;
+    const sy = settings.flipY ? -1 : 1;
+    ctx.scale(sx, sy);
 
-      const centerY = settings.snapCenter
-        ? baseRect.y + baseRect.h / 2
-        : baseRect.y + baseRect.h * (0.5 + settings.offsetY / 100);
+    const rx = -w / 2;
+    const ry = -h / 2;
 
-      ctx.save();
-      ctx.globalAlpha = clamp(settings.opacity, 0, 1);
-      ctx.globalCompositeOperation = settings.blendMode;
+    if (settings.radius > 0) {
+      const r = clamp(settings.radius, 0, Math.min(w, h) / 2);
+      ctx.beginPath();
+      ctx.moveTo(rx + r, ry);
+      ctx.arcTo(rx + w, ry, rx + w, ry + h, r);
+      ctx.arcTo(rx + w, ry + h, rx, ry + h, r);
+      ctx.arcTo(rx, ry + h, rx, ry, r);
+      ctx.arcTo(rx, ry, rx + w, ry, r);
+      ctx.closePath();
+      ctx.clip();
+    }
 
-      const filter = [
-        `hue-rotate(${settings.hue}deg)`,
-        `saturate(${settings.saturate}%)`,
-        `brightness(${settings.brightness}%)`,
-        `contrast(${settings.contrast}%)`,
-        settings.blur > 0 ? `blur(${settings.blur}px)` : "",
-      ]
-        .filter(Boolean)
-        .join(" ");
+    ctx.drawImage(overlayImg, rx, ry, w, h);
+    ctx.filter = "none";
 
-      ctx.filter = filter;
-
-      if (settings.shadow > 0) {
-        ctx.shadowColor = "rgba(30, 107, 255, 0.28)";
-        ctx.shadowBlur = settings.shadow;
-        ctx.shadowOffsetX = 0;
-        ctx.shadowOffsetY = settings.shadow > 10 ? 2 : 1;
-      }
-
-      ctx.translate(centerX, centerY);
-      ctx.rotate((settings.rotate * Math.PI) / 180);
-
-      const sx = settings.flipX ? -1 : 1;
-      const sy = settings.flipY ? -1 : 1;
-      ctx.scale(sx, sy);
-
-      const rx = -w / 2;
-      const ry = -h / 2;
-
+    if (settings.border > 0) {
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = settings.borderColor;
+      ctx.lineWidth = settings.border;
       if (settings.radius > 0) {
         const r = clamp(settings.radius, 0, Math.min(w, h) / 2);
         ctx.beginPath();
@@ -372,40 +389,22 @@ export default function CustomizationPage() {
         ctx.arcTo(rx, ry + h, rx, ry, r);
         ctx.arcTo(rx, ry, rx + w, ry, r);
         ctx.closePath();
-        ctx.clip();
+        ctx.stroke();
+      } else {
+        ctx.strokeRect(rx, ry, w, h);
       }
-
-      ctx.drawImage(overlayImg, rx, ry, w, h);
-      ctx.filter = "none";
-
-      if (settings.border > 0) {
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = settings.borderColor;
-        ctx.lineWidth = settings.border;
-        if (settings.radius > 0) {
-          const r = clamp(settings.radius, 0, Math.min(w, h) / 2);
-          ctx.beginPath();
-          ctx.moveTo(rx + r, ry);
-          ctx.arcTo(rx + w, ry, rx + w, ry + h, r);
-          ctx.arcTo(rx + w, ry + h, rx, ry + h, r);
-          ctx.arcTo(rx, ry + h, rx, ry, r);
-          ctx.arcTo(rx, ry, rx + w, ry, r);
-          ctx.closePath();
-          ctx.stroke();
-        } else {
-          ctx.strokeRect(rx, ry, w, h);
-        }
-      }
-
-      ctx.restore();
-
-      drawStateRef.current.overlayRect = { x: centerX - w / 2, y: centerY - h / 2, w, h };
-      drawStateRef.current.overlayMeta = { w, h, cx: centerX, cy: centerY };
-    } else {
-      drawStateRef.current.overlayRect = { x: 0, y: 0, w: 0, h: 0 };
-      drawStateRef.current.overlayMeta = { w: 0, h: 0, cx: 0, cy: 0 };
     }
-  };
+
+    ctx.restore();
+
+    drawStateRef.current.overlayRect = { x: centerX - w / 2, y: centerY - h / 2, w, h };
+    drawStateRef.current.overlayMeta = { w, h, cx: centerX, cy: centerY };
+  } else {
+    drawStateRef.current.overlayRect = { x: 0, y: 0, w: 0, h: 0 };
+    drawStateRef.current.overlayMeta = { w: 0, h: 0, cx: 0, cy: 0 };
+  }
+}, [settings]);
+
 
   const onPickProduct = (id) => {
     setSelectedProductId(id);
