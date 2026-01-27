@@ -63,7 +63,6 @@ const Cart = () => {
   const [loading, setLoading] = useState(true)
 
   const [userId, setUserId] = useState(() => getStored('userId', ''))
-  const [userType, setUserType] = useState(() => getStored('userType', 'B2C'))
 
   const toastTimerRef = useRef(null)
 
@@ -74,9 +73,7 @@ const Cart = () => {
   useEffect(() => {
     const syncFromStorage = () => {
       const nextUserId = getStored('userId', '')
-      const nextUserType = getStored('userType', 'B2C')
       setUserId((prev) => (prev === nextUserId ? prev : nextUserId))
-      setUserType((prev) => (prev === nextUserType ? prev : nextUserType))
     }
     window.addEventListener('storage', syncFromStorage)
     window.addEventListener('focus', syncFromStorage)
