@@ -4,12 +4,12 @@ import Navbar from './Navbar'
 import Footer from './Footer'
 import { useParams, useLocation, useNavigate } from 'react-router-dom'
 
-const DEFAULT_API_BASE = 'https://taras-kart-backend.vercel.app'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = API_BASE_RAW.replace(/\/+$/, '')
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
 function formatDate(dt) {
   if (!dt) return ''
@@ -65,14 +65,6 @@ function getItemPrice(item) {
     if (c != null) return Number(c)
   }
   return null
-}
-
-function getItemColor(item) {
-  return item.color || item.colour || item.variant_color || item.color_name || item.colour_name || ''
-}
-
-function getItemSize(item) {
-  return item.size || item.size_label || item.variant_size || item.size_name || ''
 }
 
 function getItemQty(item) {
@@ -327,7 +319,7 @@ UPI: ${bankForm.upiId || 'not provided'}`
       ? 'Upload clear product images and share your bank or UPI details so we can process your return or replacement.'
       : 'Share your bank or UPI details so we can process your refund for the cancelled order.'
 
-  const items = Array.isArray(sale?.items) ? sale.items : []
+  const items = useMemo(() => (Array.isArray(sale?.items) ? sale.items : []), [sale?.items])
   const primaryItem = items[0] || null
   const displayOrderId = (sale && sale.id) || saleIdParam
 
@@ -480,7 +472,12 @@ UPI: ${bankForm.upiId || 'not provided'}`
 
                     <div className="refund-button-row">
                       {createdRequest && (
-                        <button type="button" className="refund-btn-secondary" onClick={() => fetchRequestById(createdRequest.id)} disabled={refreshing}>
+                        <button
+                          type="button"
+                          className="refund-btn-secondary"
+                          onClick={() => fetchRequestById(createdRequest.id)}
+                          disabled={refreshing}
+                        >
                           {refreshing ? 'Refreshing…' : 'Refresh status'}
                         </button>
                       )}
@@ -502,7 +499,11 @@ UPI: ${bankForm.upiId || 'not provided'}`
 
                           <div className="refund-order-meta">
                             {sale.created_at && <span>Placed on {formatDate(sale.created_at)}</span>}
-                            {totalsComputed.finalPayable ? <span>Paid {formatCurrency(totalsComputed.finalPayable)}</span> : sale.totals ? <span>Paid {formatPriceFromTotals(sale.totals)}</span> : null}
+                            {totalsComputed.finalPayable ? (
+                              <span>Paid {formatCurrency(totalsComputed.finalPayable)}</span>
+                            ) : sale.totals ? (
+                              <span>Paid {formatPriceFromTotals(sale.totals)}</span>
+                            ) : null}
                           </div>
 
                           <div className="refund-order-id-row">
@@ -581,27 +582,53 @@ UPI: ${bankForm.upiId || 'not provided'}`
                               <div className="refund-grid">
                                 <div className="refund-field">
                                   <label className="refund-label">Account holder name</label>
-                                  <input type="text" className="refund-input" value={bankForm.accountName} onChange={e => setBankForm({ ...bankForm, accountName: e.target.value })} />
+                                  <input
+                                    type="text"
+                                    className="refund-input"
+                                    value={bankForm.accountName}
+                                    onChange={e => setBankForm({ ...bankForm, accountName: e.target.value })}
+                                  />
                                 </div>
 
                                 <div className="refund-field">
                                   <label className="refund-label">Bank name</label>
-                                  <input type="text" className="refund-input" value={bankForm.bankName} onChange={e => setBankForm({ ...bankForm, bankName: e.target.value })} />
+                                  <input
+                                    type="text"
+                                    className="refund-input"
+                                    value={bankForm.bankName}
+                                    onChange={e => setBankForm({ ...bankForm, bankName: e.target.value })}
+                                  />
                                 </div>
 
                                 <div className="refund-field">
                                   <label className="refund-label">Account number</label>
-                                  <input type="text" className="refund-input" value={bankForm.accountNumber} onChange={e => setBankForm({ ...bankForm, accountNumber: e.target.value })} />
+                                  <input
+                                    type="text"
+                                    className="refund-input"
+                                    value={bankForm.accountNumber}
+                                    onChange={e => setBankForm({ ...bankForm, accountNumber: e.target.value })}
+                                  />
                                 </div>
 
                                 <div className="refund-field">
                                   <label className="refund-label">IFSC code</label>
-                                  <input type="text" className="refund-input" value={bankForm.ifsc} onChange={e => setBankForm({ ...bankForm, ifsc: e.target.value.toUpperCase() })} />
+                                  <input
+                                    type="text"
+                                    className="refund-input"
+                                    value={bankForm.ifsc}
+                                    onChange={e => setBankForm({ ...bankForm, ifsc: e.target.value.toUpperCase() })}
+                                  />
                                 </div>
 
                                 <div className="refund-field refund-field-full">
                                   <label className="refund-label">UPI ID (optional)</label>
-                                  <input type="text" className="refund-input" value={bankForm.upiId} onChange={e => setBankForm({ ...bankForm, upiId: e.target.value })} placeholder="example@upi" />
+                                  <input
+                                    type="text"
+                                    className="refund-input"
+                                    value={bankForm.upiId}
+                                    onChange={e => setBankForm({ ...bankForm, upiId: e.target.value })}
+                                    placeholder="example@upi"
+                                  />
                                 </div>
                               </div>
                             </div>
@@ -656,7 +683,12 @@ UPI: ${bankForm.upiId || 'not provided'}`
 
                         <div className="refund-button-row">
                           {createdRequest && (
-                            <button type="button" className="refund-btn-secondary" onClick={() => fetchRequestById(createdRequest.id)} disabled={refreshing}>
+                            <button
+                              type="button"
+                              className="refund-btn-secondary"
+                              onClick={() => fetchRequestById(createdRequest.id)}
+                              disabled={refreshing}
+                            >
                               {refreshing ? 'Refreshing…' : 'Refresh status'}
                             </button>
                           )}
