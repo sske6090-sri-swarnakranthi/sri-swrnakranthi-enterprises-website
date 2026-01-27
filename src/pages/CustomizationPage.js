@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Navbar from "./Navbar";
 import "./CustomizationPage.css";
 
@@ -132,6 +132,192 @@ export default function CustomizationPage() {
   });
   const dragRef = useRef({ dragging: false, lastX: 0, lastY: 0 });
 
+  const computeBaseRect = useCallback((cw, ch, img) => {
+    if (!img) return { x: 0, y: 0, w: cw, h: ch };
+    const imgW = img.naturalWidth || img.width;
+    const imgH = img.naturalHeight || img.height;
+    const scale = Math.min(cw / imgW, ch / imgH);
+    const w = imgW * scale;
+    const h = imgH * scale;
+    const x = (cw - w) / 2;
+    const y = (ch - h) / 2;
+    return { x, y, w, h };
+  }, []);
+
+  const drawGrid = useCallback((ctx, baseRect) => {
+    const { x, y, w, h } = baseRect;
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.strokeStyle = "#1e6bff";
+    ctx.lineWidth = 1;
+    const cols = 6;
+    const rows = 6;
+    for (let i = 1; i < cols; i++) {
+      const gx = x + (w * i) / cols;
+      ctx.beginPath();
+      ctx.moveTo(gx, y);
+      ctx.lineTo(gx, y + h);
+      ctx.stroke();
+    }
+    for (let i = 1; i < rows; i++) {
+      const gy = y + (h * i) / rows;
+      ctx.beginPath();
+      ctx.moveTo(x, gy);
+      ctx.lineTo(x + w, gy);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }, []);
+
+  const drawSafeArea = useCallback((ctx, baseRect) => {
+    const { x, y, w, h } = baseRect;
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = "#1e6bff";
+    ctx.lineWidth = 2;
+    const pad = Math.min(w, h) * 0.08;
+    ctx.strokeRect(x + pad, y + pad, w - pad * 2, h - pad * 2);
+    ctx.restore();
+  }, []);
+
+  const redraw = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const cw = canvas.width / dpr;
+    const ch = canvas.height / dpr;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, cw, ch);
+
+    const baseImg = baseImgRef.current;
+    const overlayImg = overlayImgRef.current;
+
+    const baseRect = computeBaseRect(cw, ch, baseImg);
+    drawStateRef.current.baseRect = baseRect;
+
+    if (baseImg) {
+      ctx.drawImage(baseImg, baseRect.x, baseRect.y, baseRect.w, baseRect.h);
+    } else {
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, cw, ch);
+      ctx.fillStyle = "#1e6bff";
+      ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+      ctx.fillText("Preview unavailable", 16, 28);
+    }
+
+    ctx.save();
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = "#1e6bff";
+    ctx.font = "800 26px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+    ctx.rotate((-10 * Math.PI) / 180);
+    ctx.fillText("PREVIEW", -10, ch * 0.7);
+    ctx.restore();
+
+    if (settings.showGrid) drawGrid(ctx, baseRect);
+    if (settings.showSafeArea) drawSafeArea(ctx, baseRect);
+
+    if (overlayImg) {
+      const baseSize = Math.min(baseRect.w, baseRect.h);
+      const target = baseSize * 0.36 * settings.scale;
+
+      const ow = overlayImg.naturalWidth || overlayImg.width;
+      const oh = overlayImg.naturalHeight || overlayImg.height;
+      const ar = ow / oh;
+
+      let w = target;
+      let h = target;
+      if (ar >= 1) h = target / ar;
+      else w = target * ar;
+
+      const centerX = settings.snapCenter
+        ? baseRect.x + baseRect.w / 2
+        : baseRect.x + baseRect.w * (0.5 + settings.offsetX / 100);
+
+      const centerY = settings.snapCenter
+        ? baseRect.y + baseRect.h / 2
+        : baseRect.y + baseRect.h * (0.5 + settings.offsetY / 100);
+
+      ctx.save();
+      ctx.globalAlpha = clamp(settings.opacity, 0, 1);
+      ctx.globalCompositeOperation = settings.blendMode;
+
+      const filter = [
+        `hue-rotate(${settings.hue}deg)`,
+        `saturate(${settings.saturate}%)`,
+        `brightness(${settings.brightness}%)`,
+        `contrast(${settings.contrast}%)`,
+        settings.blur > 0 ? `blur(${settings.blur}px)` : "",
+      ]
+        .filter(Boolean)
+        .join(" ");
+
+      ctx.filter = filter;
+
+      if (settings.shadow > 0) {
+        ctx.shadowColor = "rgba(30, 107, 255, 0.28)";
+        ctx.shadowBlur = settings.shadow;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = settings.shadow > 10 ? 2 : 1;
+      }
+
+      ctx.translate(centerX, centerY);
+      ctx.rotate((settings.rotate * Math.PI) / 180);
+
+      const sx = settings.flipX ? -1 : 1;
+      const sy = settings.flipY ? -1 : 1;
+      ctx.scale(sx, sy);
+
+      const rx = -w / 2;
+      const ry = -h / 2;
+
+      if (settings.radius > 0) {
+        const r = clamp(settings.radius, 0, Math.min(w, h) / 2);
+        ctx.beginPath();
+        ctx.moveTo(rx + r, ry);
+        ctx.arcTo(rx + w, ry, rx + w, ry + h, r);
+        ctx.arcTo(rx + w, ry + h, rx, ry + h, r);
+        ctx.arcTo(rx, ry + h, rx, ry, r);
+        ctx.arcTo(rx, ry, rx + w, ry, r);
+        ctx.closePath();
+        ctx.clip();
+      }
+
+      ctx.drawImage(overlayImg, rx, ry, w, h);
+      ctx.filter = "none";
+
+      if (settings.border > 0) {
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = settings.borderColor;
+        ctx.lineWidth = settings.border;
+        if (settings.radius > 0) {
+          const r = clamp(settings.radius, 0, Math.min(w, h) / 2);
+          ctx.beginPath();
+          ctx.moveTo(rx + r, ry);
+          ctx.arcTo(rx + w, ry, rx + w, ry + h, r);
+          ctx.arcTo(rx + w, ry + h, rx, ry + h, r);
+          ctx.arcTo(rx, ry + h, rx, ry, r);
+          ctx.arcTo(rx, ry, rx + w, ry, r);
+          ctx.closePath();
+          ctx.stroke();
+        } else {
+          ctx.strokeRect(rx, ry, w, h);
+        }
+      }
+
+      ctx.restore();
+
+      drawStateRef.current.overlayRect = { x: centerX - w / 2, y: centerY - h / 2, w, h };
+      drawStateRef.current.overlayMeta = { w, h, cx: centerX, cy: centerY };
+    } else {
+      drawStateRef.current.overlayRect = { x: 0, y: 0, w: 0, h: 0 };
+      drawStateRef.current.overlayMeta = { w: 0, h: 0, cx: 0, cy: 0 };
+    }
+  }, [computeBaseRect, drawGrid, drawSafeArea, settings]);
+
   useEffect(() => {
     const blockContext = (e) => {
       e.preventDefault();
@@ -177,7 +363,7 @@ export default function CustomizationPage() {
       baseImgRef.current = null;
       redraw();
     };
-  }, [baseImageUrl]);
+  }, [baseImageUrl, redraw]);
 
   useEffect(() => {
     if (!overlayDataUrl) {
@@ -196,9 +382,11 @@ export default function CustomizationPage() {
       overlayImgRef.current = null;
       redraw();
     };
-  }, [overlayDataUrl]);
+  }, [overlayDataUrl, redraw]);
 
-  useEffect(() => redraw(), [settings]);
+  useEffect(() => {
+    redraw();
+  }, [redraw]);
 
   useEffect(() => {
     if (!containerRef.current || !canvasRef.current) return;
@@ -219,192 +407,7 @@ export default function CustomizationPage() {
 
     ro.observe(containerRef.current);
     return () => ro.disconnect();
-  }, []);
-
-  const computeBaseRect = (cw, ch, img) => {
-    if (!img) return { x: 0, y: 0, w: cw, h: ch };
-    const imgW = img.naturalWidth || img.width;
-    const imgH = img.naturalHeight || img.height;
-    const scale = Math.min(cw / imgW, ch / imgH);
-    const w = imgW * scale;
-    const h = imgH * scale;
-    const x = (cw - w) / 2;
-    const y = (ch - h) / 2;
-    return { x, y, w, h };
-  };
-
-  const drawGrid = (ctx, baseRect) => {
-    const { x, y, w, h } = baseRect;
-    ctx.save();
-    ctx.globalAlpha = 0.12;
-    ctx.strokeStyle = "#1e6bff";
-    ctx.lineWidth = 1;
-    const cols = 6;
-    const rows = 6;
-    for (let i = 1; i < cols; i++) {
-      const gx = x + (w * i) / cols;
-      ctx.beginPath();
-      ctx.moveTo(gx, y);
-      ctx.lineTo(gx, y + h);
-      ctx.stroke();
-    }
-    for (let i = 1; i < rows; i++) {
-      const gy = y + (h * i) / rows;
-      ctx.beginPath();
-      ctx.moveTo(x, gy);
-      ctx.lineTo(x + w, gy);
-      ctx.stroke();
-    }
-    ctx.restore();
-  };
-
-  const drawSafeArea = (ctx, baseRect) => {
-    const { x, y, w, h } = baseRect;
-    ctx.save();
-    ctx.globalAlpha = 0.18;
-    ctx.strokeStyle = "#1e6bff";
-    ctx.lineWidth = 2;
-    const pad = Math.min(w, h) * 0.08;
-    ctx.strokeRect(x + pad, y + pad, w - pad * 2, h - pad * 2);
-    ctx.restore();
-  };
-
-  const redraw = useCallback(() => {
-  const canvas = canvasRef.current;
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
-
-  const dpr = window.devicePixelRatio || 1;
-  const cw = canvas.width / dpr;
-  const ch = canvas.height / dpr;
-
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, cw, ch);
-
-  const baseImg = baseImgRef.current;
-  const overlayImg = overlayImgRef.current;
-
-  const baseRect = computeBaseRect(cw, ch, baseImg);
-  drawStateRef.current.baseRect = baseRect;
-
-  if (baseImg) {
-    ctx.drawImage(baseImg, baseRect.x, baseRect.y, baseRect.w, baseRect.h);
-  } else {
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, cw, ch);
-    ctx.fillStyle = "#1e6bff";
-    ctx.font = "700 14px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-    ctx.fillText("Preview unavailable", 16, 28);
-  }
-
-  ctx.save();
-  ctx.globalAlpha = 0.12;
-  ctx.fillStyle = "#1e6bff";
-  ctx.font = "800 26px system-ui, -apple-system, Segoe UI, Roboto, Arial";
-  ctx.rotate((-10 * Math.PI) / 180);
-  ctx.fillText("PREVIEW", -10, ch * 0.7);
-  ctx.restore();
-
-  if (settings.showGrid) drawGrid(ctx, baseRect);
-  if (settings.showSafeArea) drawSafeArea(ctx, baseRect);
-
-  if (overlayImg) {
-    const baseSize = Math.min(baseRect.w, baseRect.h);
-    const target = baseSize * 0.36 * settings.scale;
-
-    const ow = overlayImg.naturalWidth || overlayImg.width;
-    const oh = overlayImg.naturalHeight || overlayImg.height;
-    const ar = ow / oh;
-
-    let w = target;
-    let h = target;
-    if (ar >= 1) h = target / ar;
-    else w = target * ar;
-
-    const centerX = settings.snapCenter
-      ? baseRect.x + baseRect.w / 2
-      : baseRect.x + baseRect.w * (0.5 + settings.offsetX / 100);
-
-    const centerY = settings.snapCenter
-      ? baseRect.y + baseRect.h / 2
-      : baseRect.y + baseRect.h * (0.5 + settings.offsetY / 100);
-
-    ctx.save();
-    ctx.globalAlpha = clamp(settings.opacity, 0, 1);
-    ctx.globalCompositeOperation = settings.blendMode;
-
-    const filter = [
-      `hue-rotate(${settings.hue}deg)`,
-      `saturate(${settings.saturate}%)`,
-      `brightness(${settings.brightness}%)`,
-      `contrast(${settings.contrast}%)`,
-      settings.blur > 0 ? `blur(${settings.blur}px)` : "",
-    ].filter(Boolean).join(" ");
-
-    ctx.filter = filter;
-
-    if (settings.shadow > 0) {
-      ctx.shadowColor = "rgba(30, 107, 255, 0.28)";
-      ctx.shadowBlur = settings.shadow;
-      ctx.shadowOffsetX = 0;
-      ctx.shadowOffsetY = settings.shadow > 10 ? 2 : 1;
-    }
-
-    ctx.translate(centerX, centerY);
-    ctx.rotate((settings.rotate * Math.PI) / 180);
-
-    const sx = settings.flipX ? -1 : 1;
-    const sy = settings.flipY ? -1 : 1;
-    ctx.scale(sx, sy);
-
-    const rx = -w / 2;
-    const ry = -h / 2;
-
-    if (settings.radius > 0) {
-      const r = clamp(settings.radius, 0, Math.min(w, h) / 2);
-      ctx.beginPath();
-      ctx.moveTo(rx + r, ry);
-      ctx.arcTo(rx + w, ry, rx + w, ry + h, r);
-      ctx.arcTo(rx + w, ry + h, rx, ry + h, r);
-      ctx.arcTo(rx, ry + h, rx, ry, r);
-      ctx.arcTo(rx, ry, rx + w, ry, r);
-      ctx.closePath();
-      ctx.clip();
-    }
-
-    ctx.drawImage(overlayImg, rx, ry, w, h);
-    ctx.filter = "none";
-
-    if (settings.border > 0) {
-      ctx.shadowBlur = 0;
-      ctx.strokeStyle = settings.borderColor;
-      ctx.lineWidth = settings.border;
-      if (settings.radius > 0) {
-        const r = clamp(settings.radius, 0, Math.min(w, h) / 2);
-        ctx.beginPath();
-        ctx.moveTo(rx + r, ry);
-        ctx.arcTo(rx + w, ry, rx + w, ry + h, r);
-        ctx.arcTo(rx + w, ry + h, rx, ry + h, r);
-        ctx.arcTo(rx, ry + h, rx, ry, r);
-        ctx.arcTo(rx, ry, rx + w, ry, r);
-        ctx.closePath();
-        ctx.stroke();
-      } else {
-        ctx.strokeRect(rx, ry, w, h);
-      }
-    }
-
-    ctx.restore();
-
-    drawStateRef.current.overlayRect = { x: centerX - w / 2, y: centerY - h / 2, w, h };
-    drawStateRef.current.overlayMeta = { w, h, cx: centerX, cy: centerY };
-  } else {
-    drawStateRef.current.overlayRect = { x: 0, y: 0, w: 0, h: 0 };
-    drawStateRef.current.overlayMeta = { w: 0, h: 0, cx: 0, cy: 0 };
-  }
-}, [settings]);
-
+  }, [redraw]);
 
   const onPickProduct = (id) => {
     setSelectedProductId(id);
@@ -533,9 +536,7 @@ export default function CustomizationPage() {
       <div className="customization-page">
         <div className="customization-header">
           <div className="customization-title">Customize Your Product</div>
-          <div className="customization-desc">
-            Pick a product, upload your logo, and adjust it live in the preview.
-          </div>
+          <div className="customization-desc">Pick a product, upload your logo, and adjust it live in the preview.</div>
         </div>
 
         <div className="customization-shell">
@@ -616,7 +617,12 @@ export default function CustomizationPage() {
                 <button className="btn small" type="button" onClick={() => quickAlign("center")} disabled={!overlayDataUrl}>
                   Center
                 </button>
-                <button className="btn small" type="button" onClick={() => quickAlign("bottom")} disabled={!overlayDataUrl}>
+                <button
+                  className="btn small"
+                  type="button"
+                  onClick={() => quickAlign("bottom")}
+                  disabled={!overlayDataUrl}
+                >
                   Bottom
                 </button>
                 <button className="btn small" type="button" onClick={() => quickAlign("left")} disabled={!overlayDataUrl}>
@@ -625,7 +631,12 @@ export default function CustomizationPage() {
                 <button className="btn small" type="button" onClick={() => quickAlign("right")} disabled={!overlayDataUrl}>
                   Right
                 </button>
-                <button className="btn small" type="button" onClick={() => setSetting("snapCenter", true)} disabled={!overlayDataUrl}>
+                <button
+                  className="btn small"
+                  type="button"
+                  onClick={() => setSetting("snapCenter", true)}
+                  disabled={!overlayDataUrl}
+                >
                   Snap
                 </button>
               </div>
@@ -691,7 +702,11 @@ export default function CustomizationPage() {
                 <button className="btn outline" type="button" onClick={() => setSetting("showGrid", !settings.showGrid)}>
                   {settings.showGrid ? "Hide Grid" : "Show Grid"}
                 </button>
-                <button className="btn outline" type="button" onClick={() => setSetting("showSafeArea", !settings.showSafeArea)}>
+                <button
+                  className="btn outline"
+                  type="button"
+                  onClick={() => setSetting("showSafeArea", !settings.showSafeArea)}
+                >
                   {settings.showSafeArea ? "Hide Safe Area" : "Show Safe Area"}
                 </button>
                 <button className="btn soft" type="button" onClick={clearAll} disabled={loadingBgRemoval}>
@@ -706,13 +721,28 @@ export default function CustomizationPage() {
               <div className="panel-title">Controls</div>
 
               <div className="toggle-row">
-                <button className={`chip ${settings.flipX ? "active" : ""}`} type="button" onClick={() => setSetting("flipX", !settings.flipX)} disabled={!overlayDataUrl}>
+                <button
+                  className={`chip ${settings.flipX ? "active" : ""}`}
+                  type="button"
+                  onClick={() => setSetting("flipX", !settings.flipX)}
+                  disabled={!overlayDataUrl}
+                >
                   Flip X
                 </button>
-                <button className={`chip ${settings.flipY ? "active" : ""}`} type="button" onClick={() => setSetting("flipY", !settings.flipY)} disabled={!overlayDataUrl}>
+                <button
+                  className={`chip ${settings.flipY ? "active" : ""}`}
+                  type="button"
+                  onClick={() => setSetting("flipY", !settings.flipY)}
+                  disabled={!overlayDataUrl}
+                >
                   Flip Y
                 </button>
-                <button className={`chip ${settings.snapCenter ? "active" : ""}`} type="button" onClick={() => setSetting("snapCenter", !settings.snapCenter)} disabled={!overlayDataUrl}>
+                <button
+                  className={`chip ${settings.snapCenter ? "active" : ""}`}
+                  type="button"
+                  onClick={() => setSetting("snapCenter", !settings.snapCenter)}
+                  disabled={!overlayDataUrl}
+                >
                   Snap Center
                 </button>
               </div>
@@ -722,7 +752,15 @@ export default function CustomizationPage() {
                   <span>Size</span>
                   <span className="control-val">{settings.scale.toFixed(2)}x</span>
                 </div>
-                <input type="range" min="0.25" max="3.2" step="0.01" value={settings.scale} onChange={(e) => setSetting("scale", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="0.25"
+                  max="3.2"
+                  step="0.01"
+                  value={settings.scale}
+                  onChange={(e) => setSetting("scale", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
 
               <div className="control">
@@ -730,7 +768,15 @@ export default function CustomizationPage() {
                   <span>Rotate</span>
                   <span className="control-val">{Math.round(settings.rotate)}°</span>
                 </div>
-                <input type="range" min="-180" max="180" step="1" value={settings.rotate} onChange={(e) => setSetting("rotate", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="-180"
+                  max="180"
+                  step="1"
+                  value={settings.rotate}
+                  onChange={(e) => setSetting("rotate", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
 
               <div className="control">
@@ -738,7 +784,15 @@ export default function CustomizationPage() {
                   <span>Opacity</span>
                   <span className="control-val">{Math.round(settings.opacity * 100)}%</span>
                 </div>
-                <input type="range" min="0.05" max="1" step="0.01" value={settings.opacity} onChange={(e) => setSetting("opacity", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="0.05"
+                  max="1"
+                  step="0.01"
+                  value={settings.opacity}
+                  onChange={(e) => setSetting("opacity", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
 
               <div className="control">
@@ -746,7 +800,15 @@ export default function CustomizationPage() {
                   <span>Move X</span>
                   <span className="control-val">{Math.round(settings.offsetX)}%</span>
                 </div>
-                <input type="range" min="-50" max="50" step="1" value={settings.offsetX} onChange={(e) => setSetting("offsetX", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="-50"
+                  max="50"
+                  step="1"
+                  value={settings.offsetX}
+                  onChange={(e) => setSetting("offsetX", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
 
               <div className="control">
@@ -754,7 +816,15 @@ export default function CustomizationPage() {
                   <span>Move Y</span>
                   <span className="control-val">{Math.round(settings.offsetY)}%</span>
                 </div>
-                <input type="range" min="-50" max="50" step="1" value={settings.offsetY} onChange={(e) => setSetting("offsetY", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="-50"
+                  max="50"
+                  step="1"
+                  value={settings.offsetY}
+                  onChange={(e) => setSetting("offsetY", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
             </div>
 
@@ -766,7 +836,12 @@ export default function CustomizationPage() {
                   <span>Blend Mode</span>
                   <span className="control-val">{settings.blendMode}</span>
                 </div>
-                <select className="select" value={settings.blendMode} onChange={(e) => setSetting("blendMode", e.target.value)} disabled={!overlayDataUrl}>
+                <select
+                  className="select"
+                  value={settings.blendMode}
+                  onChange={(e) => setSetting("blendMode", e.target.value)}
+                  disabled={!overlayDataUrl}
+                >
                   <option value="source-over">Normal</option>
                   <option value="multiply">Multiply</option>
                   <option value="screen">Screen</option>
@@ -785,7 +860,15 @@ export default function CustomizationPage() {
                   <span>Shadow</span>
                   <span className="control-val">{settings.shadow}px</span>
                 </div>
-                <input type="range" min="0" max="30" step="1" value={settings.shadow} onChange={(e) => setSetting("shadow", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="0"
+                  max="30"
+                  step="1"
+                  value={settings.shadow}
+                  onChange={(e) => setSetting("shadow", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
 
               <div className="control">
@@ -793,7 +876,15 @@ export default function CustomizationPage() {
                   <span>Border</span>
                   <span className="control-val">{settings.border}px</span>
                 </div>
-                <input type="range" min="0" max="12" step="1" value={settings.border} onChange={(e) => setSetting("border", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="0"
+                  max="12"
+                  step="1"
+                  value={settings.border}
+                  onChange={(e) => setSetting("border", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
 
               <div className="control">
@@ -801,7 +892,13 @@ export default function CustomizationPage() {
                   <span>Border Color</span>
                   <span className="control-val">{settings.borderColor}</span>
                 </div>
-                <input type="color" className="color" value={settings.borderColor} onChange={(e) => setSetting("borderColor", e.target.value)} disabled={!overlayDataUrl} />
+                <input
+                  type="color"
+                  className="color"
+                  value={settings.borderColor}
+                  onChange={(e) => setSetting("borderColor", e.target.value)}
+                  disabled={!overlayDataUrl}
+                />
               </div>
 
               <div className="control">
@@ -809,7 +906,15 @@ export default function CustomizationPage() {
                   <span>Roundness</span>
                   <span className="control-val">{settings.radius}px</span>
                 </div>
-                <input type="range" min="0" max="60" step="1" value={settings.radius} onChange={(e) => setSetting("radius", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="0"
+                  max="60"
+                  step="1"
+                  value={settings.radius}
+                  onChange={(e) => setSetting("radius", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
 
               <div className="control">
@@ -817,7 +922,15 @@ export default function CustomizationPage() {
                   <span>Blur</span>
                   <span className="control-val">{settings.blur}px</span>
                 </div>
-                <input type="range" min="0" max="12" step="1" value={settings.blur} onChange={(e) => setSetting("blur", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="0"
+                  max="12"
+                  step="1"
+                  value={settings.blur}
+                  onChange={(e) => setSetting("blur", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
 
               <div className="control">
@@ -825,7 +938,15 @@ export default function CustomizationPage() {
                   <span>Hue</span>
                   <span className="control-val">{settings.hue}°</span>
                 </div>
-                <input type="range" min="-180" max="180" step="1" value={settings.hue} onChange={(e) => setSetting("hue", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="-180"
+                  max="180"
+                  step="1"
+                  value={settings.hue}
+                  onChange={(e) => setSetting("hue", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
 
               <div className="control">
@@ -833,7 +954,15 @@ export default function CustomizationPage() {
                   <span>Saturation</span>
                   <span className="control-val">{settings.saturate}%</span>
                 </div>
-                <input type="range" min="0" max="220" step="1" value={settings.saturate} onChange={(e) => setSetting("saturate", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="0"
+                  max="220"
+                  step="1"
+                  value={settings.saturate}
+                  onChange={(e) => setSetting("saturate", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
 
               <div className="control">
@@ -841,7 +970,15 @@ export default function CustomizationPage() {
                   <span>Brightness</span>
                   <span className="control-val">{settings.brightness}%</span>
                 </div>
-                <input type="range" min="40" max="180" step="1" value={settings.brightness} onChange={(e) => setSetting("brightness", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="40"
+                  max="180"
+                  step="1"
+                  value={settings.brightness}
+                  onChange={(e) => setSetting("brightness", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
 
               <div className="control">
@@ -849,7 +986,15 @@ export default function CustomizationPage() {
                   <span>Contrast</span>
                   <span className="control-val">{settings.contrast}%</span>
                 </div>
-                <input type="range" min="40" max="180" step="1" value={settings.contrast} onChange={(e) => setSetting("contrast", Number(e.target.value))} disabled={!overlayDataUrl} />
+                <input
+                  type="range"
+                  min="40"
+                  max="180"
+                  step="1"
+                  value={settings.contrast}
+                  onChange={(e) => setSetting("contrast", Number(e.target.value))}
+                  disabled={!overlayDataUrl}
+                />
               </div>
 
               <div className="right-actions">
