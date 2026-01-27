@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import './Wishlist.css'
 import { useNavigate } from 'react-router-dom'
 import WishlistPopup from './WishlistPopup'
@@ -73,7 +73,7 @@ const Wishlist = () => {
     }
   }, [userType])
 
-  const normalizeWishlistItem = (row) => {
+  const normalizeWishlistItem = useCallback((row) => {
     const images = Array.isArray(row?.images) ? row.images : []
     const image_url = row?.image_url || (images.length ? images[0] : '/images/placeholder.jpg')
     const name = row?.name ?? row?.product_name ?? ''
@@ -86,9 +86,9 @@ const Wishlist = () => {
       image_url,
       images
     }
-  }
+  }, [])
 
-  const loadWishlist = async () => {
+  const loadWishlist = useCallback(async () => {
     if (!userId) {
       setWishlistItems([])
       setIsLoading(false)
@@ -108,11 +108,11 @@ const Wishlist = () => {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [userId, setWishlistItems, normalizeWishlistItem])
 
   useEffect(() => {
     loadWishlist()
-  }, [userId])
+  }, [loadWishlist])
 
   useEffect(() => {
     const handler = (e) => {
@@ -122,14 +122,14 @@ const Wishlist = () => {
     }
     window.addEventListener('wishlist-local-updated', handler)
     return () => window.removeEventListener('wishlist-local-updated', handler)
-  }, [userId, setWishlistItems])
+  }, [userId, setWishlistItems, normalizeWishlistItem])
 
   const handleRemove = (item) => {
     setSelectedItem(item)
     setShowPopup(true)
   }
 
-  const confirmRemove = async () => {
+  const confirmRemove = useCallback(async () => {
     if (!userId || !selectedItem) {
       setShowPopup(false)
       return
@@ -151,11 +151,10 @@ const Wishlist = () => {
       try {
         window.dispatchEvent(new CustomEvent('wishlist-local-updated', { detail: updated }))
       } catch {}
-    } catch {
     } finally {
       setShowPopup(false)
     }
-  }
+  }, [userId, selectedItem, wishlistItems, setWishlistItems])
 
   const fmt = (n) => Number(n || 0).toFixed(2)
 
