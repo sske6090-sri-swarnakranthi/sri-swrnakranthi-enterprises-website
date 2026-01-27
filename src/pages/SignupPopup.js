@@ -1,25 +1,28 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { FiEye, FiEyeOff, FiX, FiUser, FiMail, FiPhone, FiLock } from 'react-icons/fi'
-import { FaGoogle } from 'react-icons/fa'
 import './SignupPopup.css'
 
-const DEFAULT_API_BASE = 'http://localhost:5000'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
+
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = API_BASE_RAW.replace(/\/+$/, '')
+
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).trim().replace(/\/+$/, '')
 
 function persistSession(userLike = {}) {
   const id = userLike.id || userLike.userId || userLike.customerId
   const email = userLike.email || ''
   const name = userLike.name || ''
   const type = userLike.user_type || userLike.type || 'B2C'
+
   if (id) sessionStorage.setItem('userId', String(id))
   if (email) sessionStorage.setItem('userEmail', String(email))
   if (name) sessionStorage.setItem('userName', String(name))
   if (type) sessionStorage.setItem('userType', String(type))
   if (userLike.token) sessionStorage.setItem('userToken', String(userLike.token))
+
   return { id, email, name, userType: type }
 }
 
@@ -42,23 +45,26 @@ export default function SignupPopup({ onClose, onSuccess }) {
   const [showConfirmPwd, setShowConfirmPwd] = useState(false)
 
   const validateEmail = (v) => /^\S+@\S+\.\S+$/.test(v)
-  const validateMobile = (number) => /^[6-9]\d{9}$/.test(number)
+  const validateMobile = (v) => /^[6-9]\d{9}$/.test(v)
 
   const pwdScore = (v) => {
     let s = 0
-    if (v.length >= 8) s++
-    if (/[A-Z]/.test(v)) s++
-    if (/[a-z]/.test(v)) s++
-    if (/\d/.test(v)) s++
-    if (/[^A-Za-z0-9]/.test(v)) s++
+    const vv = String(v || '')
+    if (vv.length >= 8) s++
+    if (/[A-Z]/.test(vv)) s++
+    if (/[a-z]/.test(vv)) s++
+    if (/\d/.test(vv)) s++
+    if (/[^A-Za-z0-9]/.test(vv)) s++
     return Math.min(s, 4)
   }
+
+  const strength = pwdScore(password)
 
   const canSubmit =
     fullName.trim().length > 1 &&
     validateEmail(email) &&
     validateMobile(mobile) &&
-    pwdScore(password) >= 3 &&
+    strength >= 3 &&
     confirmPassword === password &&
     acceptTerms &&
     !submitting
@@ -76,7 +82,7 @@ export default function SignupPopup({ onClose, onSuccess }) {
   }, [onClose])
 
   useEffect(() => {
-    firstInputRef.current?.focus()
+    if (firstInputRef.current) firstInputRef.current.focus()
   }, [])
 
   const handleOverlayMouseDown = (e) => {
@@ -86,7 +92,7 @@ export default function SignupPopup({ onClose, onSuccess }) {
   const showMsg = (msg, type = 'error') => {
     if (type === 'error') setError(msg)
     else setSuccess(msg)
-    setTimeout(() => {
+    window.setTimeout(() => {
       setError('')
       setSuccess('')
     }, 2500)
@@ -105,18 +111,26 @@ export default function SignupPopup({ onClose, onSuccess }) {
         body: JSON.stringify({
           name: fullName.trim(),
           email: email.trim(),
-          mobile: mobile.trim(),
+          mobile: String(mobile).trim(),
           password
         })
       })
-      const data = await resp.json()
+
+      let data = null
+      try {
+        data = await resp.json()
+      } catch {
+        data = null
+      }
+
       if (!resp.ok) {
         showMsg(data?.message || 'Signup failed', 'error')
         return
       }
-      const persisted = persistSession(data)
+
+      const persisted = persistSession(data || {})
       showMsg('Signup successful', 'success')
-      setTimeout(() => onSuccess && onSuccess(persisted), 600)
+      window.setTimeout(() => onSuccess && onSuccess(persisted), 600)
     } catch {
       showMsg('Something went wrong. Please try again', 'error')
     } finally {
@@ -131,11 +145,6 @@ export default function SignupPopup({ onClose, onSuccess }) {
     } catch {}
   }
 
-  const handleGoogleLogin = () => {
-    showMsg('Google login will be added later', 'error')
-  }
-
-  const strength = pwdScore(password)
   const strengthLabel = ['Too weak', 'Weak', 'Fair', 'Strong', 'Strong'][strength]
   const strengthWidth = ['10%', '30%', '55%', '80%', '100%'][strength]
   const strengthColor = ['#cc3333', '#2563eb', '#2563eb', '#2563eb', '#2563eb'][strength]
@@ -185,7 +194,7 @@ export default function SignupPopup({ onClose, onSuccess }) {
               <input
                 type="tel"
                 placeholder="Mobile Number"
-                maxLength="10"
+                maxLength={10}
                 value={mobile}
                 onChange={(e) => setMobile(e.target.value.replace(/\D/g, '').slice(0, 10))}
               />
@@ -244,20 +253,11 @@ export default function SignupPopup({ onClose, onSuccess }) {
           </button>
         </form>
 
-        <div className="or-row">
-          <span className="line" />
-          <span className="or">Or</span>
-          <span className="line" />
-        </div>
-
-        <div className="social-row">
-          <button className="soc-btn google" onClick={handleGoogleLogin}>
-            <FaGoogle /> Continue with Google
-          </button>
-        </div>
-
         <div className="switch-row">
-          Already have an account? <span className="switch" onClick={openLogin}>Login</span>
+          Already have an account?{' '}
+          <span className="switch" onClick={openLogin}>
+            Login
+          </span>
         </div>
       </div>
     </div>

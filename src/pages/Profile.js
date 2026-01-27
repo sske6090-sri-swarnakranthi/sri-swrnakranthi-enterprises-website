@@ -9,14 +9,19 @@ import LoginPopup from './LoginPopup'
 import SignupPopup from './SignupPopup'
 import ReturnsPage from './ReturnsPage'
 
-const DEFAULT_API_BASE = 'http://localhost:5000'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = API_BASE_RAW.replace(/\/+$/, '')
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).trim().replace(/\/+$/, '')
 
-const isValidMobile = (v) => /^[6-9]\d{9}$/.test(String(v || '').trim())
+const normalizeMobile = (v) => {
+  const s = String(v == null ? '' : v)
+    .replace(/\D/g, '')
+    .slice(-10)
+  return /^[6-9]\d{9}$/.test(s) ? s : ''
+}
 
 const getSessionOrLocal = (k) => {
   const a = sessionStorage.getItem(k)
@@ -45,6 +50,7 @@ const normalizeAuthPayload = (payload) => {
       email: payload.user.email,
       name: payload.user.name,
       type: payload.user.type || payload.user.user_type || 'B2C',
+      mobile: payload.user.mobile,
       token: payload.token
     }
   }
@@ -53,6 +59,7 @@ const normalizeAuthPayload = (payload) => {
     email: payload.email,
     name: payload.name,
     type: payload.userType || payload.type || payload.user_type || 'B2C',
+    mobile: payload.mobile,
     token: payload.token
   }
 }
@@ -74,12 +81,12 @@ const Profile = () => {
 
   const hydrateUser = async () => {
     const email = getSessionOrLocal('userEmail')
-    const uid = getSessionOrLocal('firebaseUid')
     const id = getSessionOrLocal('userId')
     const localName = getSessionOrLocal('userName')
     const localType = getSessionOrLocal('userType')
+    const localMobile = normalizeMobile(getSessionOrLocal('userMobile'))
 
-    if (!email && !id && !uid) {
+    if (!email && !id) {
       setIsLoggedIn(false)
       setUserInfo(null)
       return
@@ -91,18 +98,17 @@ const Profile = () => {
         profilePic: '/images/profile-pic.png',
         name: localName || 'User',
         email: '',
-        mobile: ''
+        mobile: localMobile
       })
       return
     }
 
     try {
       const res = await fetch(`${API_BASE}/api/user/by-email/${encodeURIComponent(email)}`)
-      const data = await res.json()
-      const name = data?.name || localName || (email.includes('@') ? email.split('@')[0] : 'User')
+      const data = await res.json().catch(() => null)
 
-      const mobileRaw = data?.mobile
-      const mobile = isValidMobile(mobileRaw) ? String(mobileRaw) : ''
+      const name = data?.name || localName || (email.includes('@') ? email.split('@')[0] : 'User')
+      const mobile = normalizeMobile(data?.mobile) || localMobile
 
       setUserInfo({
         profilePic: '/images/profile.webp',
@@ -111,19 +117,19 @@ const Profile = () => {
         mobile
       })
 
-      setIsLoggedIn(!!(data?.email || email))
-      if (data?.email || email) {
-        setSessionAndLocal('userEmail', data?.email || email)
-        setSessionAndLocal('userName', name)
-        if (data?.type || localType) setSessionAndLocal('userType', data?.type || localType)
-      }
+      setIsLoggedIn(true)
+      setSessionAndLocal('userEmail', data?.email || email)
+      setSessionAndLocal('userName', name)
+      if (data?.type || localType) setSessionAndLocal('userType', data?.type || localType)
+      if (mobile) setSessionAndLocal('userMobile', mobile)
     } catch {
-      setIsLoggedIn(!!(email || id || uid))
+      const name = localName || (email ? email.split('@')[0] : 'User')
+      setIsLoggedIn(true)
       setUserInfo({
         profilePic: '/images/profile-pic.png',
-        name: localName || (email ? email.split('@')[0] : 'User'),
+        name,
         email: email || '',
-        mobile: ''
+        mobile: localMobile
       })
     }
   }
@@ -133,8 +139,7 @@ const Profile = () => {
   }, [])
 
   useEffect(() => {
-    const m = userInfo?.mobile && isValidMobile(userInfo.mobile) ? String(userInfo.mobile) : ''
-    setMobileInput(m)
+    setMobileInput(normalizeMobile(userInfo?.mobile))
   }, [userInfo?.mobile])
 
   const handleLogout = () => {
@@ -143,8 +148,8 @@ const Profile = () => {
     localStorage.removeItem('userEmail')
     localStorage.removeItem('userName')
     localStorage.removeItem('userType')
-    localStorage.removeItem('firebaseUid')
     localStorage.removeItem('userToken')
+    localStorage.removeItem('userMobile')
     localStorage.removeItem('tk_id_token')
     setUserInfo(null)
     setIsLoggedIn(false)
@@ -153,15 +158,14 @@ const Profile = () => {
 
   const handleSaveMobile = async () => {
     const email = getSessionOrLocal('userEmail')
-    const uid = getSessionOrLocal('firebaseUid')
 
     if (!email) {
       setToast('Email not found, please login again')
       return
     }
 
-    const mobile = String(mobileInput || '').replace(/\D/g, '').slice(0, 10)
-    if (!isValidMobile(mobile)) {
+    const mobile = normalizeMobile(mobileInput)
+    if (!mobile) {
       setToast('Enter a valid 10 digit mobile number')
       return
     }
@@ -171,7 +175,7 @@ const Profile = () => {
       const r1 = await fetch(`${API_BASE}/api/user/update-mobile`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, mobile, uid: uid || undefined })
+        body: JSON.stringify({ email, mobile })
       })
 
       if (!r1.ok) {
@@ -182,13 +186,14 @@ const Profile = () => {
       }
 
       const out = await r1.json().catch(() => ({}))
-      const savedMobile = out?.mobile || mobile
+      const savedMobile = normalizeMobile(out?.mobile) || mobile
 
       setUserInfo((prev) => ({
         ...(prev || {}),
         mobile: savedMobile
       }))
 
+      setSessionAndLocal('userMobile', savedMobile)
       setToast('Mobile number saved')
     } catch {
       setToast('Unable to save mobile number')
@@ -197,7 +202,7 @@ const Profile = () => {
     }
   }
 
-  const mobileMissing = isLoggedIn && userInfo && (!userInfo.mobile || !isValidMobile(userInfo.mobile))
+  const mobileMissing = isLoggedIn && userInfo && !normalizeMobile(userInfo.mobile)
 
   return (
     <div className="profile-page">
@@ -229,10 +234,6 @@ const Profile = () => {
               <span className="btn-shine"></span>
               Orders
             </button>
-            {/*<button className={`profile-button ${activeSection === 'Returns' ? 'active' : ''}`} onClick={() => setActiveSection('Returns')}>
-              <span className="btn-shine"></span>
-              Returns &amp; Refunds
-            </button> */}
             <button className={`profile-button ${activeSection === 'Terms' ? 'active' : ''}`} onClick={() => setActiveSection('Terms')}>
               <span className="btn-shine"></span>
               Terms & Conditions
@@ -291,10 +292,7 @@ const Profile = () => {
                         <input
                           className="mobile-input"
                           value={mobileInput}
-                          onChange={(e) => {
-                            const v = String(e.target.value || '').replace(/\D/g, '').slice(0, 10)
-                            setMobileInput(v)
-                          }}
+                          onChange={(e) => setMobileInput(String(e.target.value || '').replace(/\D/g, '').slice(0, 10))}
                           inputMode="numeric"
                           pattern="[0-9]*"
                           placeholder="Enter 10 digit mobile number"
@@ -317,7 +315,9 @@ const Profile = () => {
                     </div>
                     <div className="info-item">
                       <div className="info-label">Mobile</div>
-                      <div className={`info-value ${!userInfo.mobile ? 'muted' : ''}`}>{userInfo.mobile || 'Add the mobile number'}</div>
+                      <div className={`info-value ${!normalizeMobile(userInfo.mobile) ? 'muted' : ''}`}>
+                        {normalizeMobile(userInfo.mobile) || 'Add the mobile number'}
+                      </div>
                     </div>
                   </div>
 
@@ -330,13 +330,13 @@ const Profile = () => {
 
             {activeSection === 'Orders' && isLoggedIn && (
               <div className="section-card">
-                <Orders user={{ email: userInfo?.email, mobile: userInfo?.mobile }} />
+                <Orders user={{ email: userInfo?.email, mobile: normalizeMobile(userInfo?.mobile) }} />
               </div>
             )}
 
             {activeSection === 'Returns' && isLoggedIn && (
               <div className="section-card">
-                <ReturnsPage embedded user={{ email: userInfo?.email, mobile: userInfo?.mobile }} />
+                <ReturnsPage embedded user={{ email: userInfo?.email, mobile: normalizeMobile(userInfo?.mobile) }} />
               </div>
             )}
 
@@ -365,6 +365,8 @@ const Profile = () => {
             if (u?.name) setSessionAndLocal('userName', String(u.name))
             if (u?.type) setSessionAndLocal('userType', String(u.type))
             if (u?.token) setSessionAndLocal('userToken', String(u.token))
+            const m = normalizeMobile(u?.mobile)
+            if (m) setSessionAndLocal('userMobile', m)
             setShowLoginPopup(false)
             setIsLoggedIn(true)
             hydrateUser()
@@ -383,6 +385,8 @@ const Profile = () => {
             if (u?.name) setSessionAndLocal('userName', String(u.name))
             if (u?.type) setSessionAndLocal('userType', String(u.type))
             if (u?.token) setSessionAndLocal('userToken', String(u.token))
+            const m = normalizeMobile(u?.mobile)
+            if (m) setSessionAndLocal('userMobile', m)
             setShowSignupPopup(false)
             setIsLoggedIn(true)
             hydrateUser()

@@ -2,12 +2,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import './FilterSidebar.css'
 import { FaFilter, FaChevronDown, FaChevronUp } from 'react-icons/fa'
 
-const DEFAULT_API_BASE = 'http://localhost:5000'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = String(API_BASE_RAW || '').replace(/\/+$/, '')
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
 const categories = [
   'T-SHIRTS & CAPS',
@@ -158,7 +158,7 @@ const FilterSidebar = ({ source = [], onFilterChange }) => {
     const ids = new Set()
     const merged = []
     ;[...source, ...facetPool].forEach((p) => {
-      const k = `${p.id || ''}-${p.product_id || ''}-${p.size || ''}-${p.color || ''}`
+      const k = `${p.id || ''}-${p.product_id || ''}-${p.size || ''}-${p.color || p.colour || ''}`
       if (ids.has(k)) return
       ids.add(k)
       merged.push(p)
@@ -271,7 +271,8 @@ const FilterSidebar = ({ source = [], onFilterChange }) => {
   }
 
   const runFiltersAndSort = (filters, sortKey) => {
-    const filtered = applyFilters(source, filters || {})
+    const base = Array.isArray(source) && source.length ? source : facetPool
+    const filtered = applyFilters(base, filters || {})
     const sorted = applySort(filtered, sortKey)
     onFilterChange(sorted)
   }
@@ -311,7 +312,8 @@ const FilterSidebar = ({ source = [], onFilterChange }) => {
     setSelected({})
     setPending({})
     setSortOption('relevance')
-    onFilterChange(source)
+    const base = Array.isArray(source) && source.length ? source : facetPool
+    onFilterChange(base)
     setOpenSection(null)
     setSortOpen(false)
   }

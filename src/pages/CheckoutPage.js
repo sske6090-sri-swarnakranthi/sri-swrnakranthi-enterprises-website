@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import './CheckoutPage.css'
@@ -9,12 +9,12 @@ import { useNavigate } from 'react-router-dom'
 import { initializeApp, getApps } from 'firebase/app'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
 
-const DEFAULT_API_BASE = 'http://localhost:5000'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = API_BASE_RAW.replace(/\/+$/, '')
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
 const env =
   typeof import.meta !== 'undefined' && import.meta.env
@@ -62,17 +62,17 @@ const money = (v) => {
   return n.toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 })
 }
 
+const getName = (p) => p?.name ?? p?.product_name ?? ''
+const getBrand = (p) => p?.brand ?? ''
+const getImages = (p) => (Array.isArray(p?.images) ? p.images : [])
+const getMainImage = (p) => p?.image_url || (getImages(p).length ? getImages(p)[0] : '')
+
 const CheckoutPage = () => {
   const navigate = useNavigate()
   const { addToCart } = useCart()
   const { addToWishlist } = useWishlist()
 
   const [product, setProduct] = useState(null)
-  const [variants, setVariants] = useState([])
-  const [colorImages, setColorImages] = useState({})
-  const [selectedColor, setSelectedColor] = useState(null)
-  const [selectedSize, setSelectedSize] = useState(null)
-
   const [popupMessage, setPopupMessage] = useState('')
   const [isLoading, setIsLoading] = useState(true)
 
@@ -96,6 +96,7 @@ const CheckoutPage = () => {
         setProduct(null)
       }
     }
+    setIsLoading(false)
   }, [])
 
   useEffect(() => {
@@ -129,7 +130,7 @@ const CheckoutPage = () => {
         localStorage.setItem('userType', typeStr)
         sessionStorage.setItem('userEmail', String(data.email || email))
       }
-    } catch { }
+    } catch {}
   }
 
   useEffect(() => {
@@ -148,128 +149,20 @@ const CheckoutPage = () => {
     return () => unsubscribe()
   }, [])
 
-  useEffect(() => {
-    const loadVariants = async () => {
-      if (!product) return
-      setIsLoading(true)
-      try {
-        const res = await fetch(`${API_BASE}/api/products?limit=5000`)
-        const data = await res.json()
-
-        const same = (Array.isArray(data) ? data : []).filter(
-          (r) =>
-            String(r.brand || '')
-              .trim()
-              .toUpperCase() === String(product.brand || '')
-                .trim()
-                .toUpperCase() &&
-            String(r.product_name || '')
-              .trim()
-              .toUpperCase() === String(product.product_name || '')
-                .trim()
-                .toUpperCase()
-        )
-
-        const mapped = same.map((r) => ({
-          id: r.id,
-          product_id: r.id,
-          color: r.color || r.colour || '',
-          size: r.size || '',
-          image_url: Array.isArray(r.images) && r.images.length ? r.images[0] : '',
-          ean_code: r.ean_code || '',
-          original_price_b2c: r.b2c_actual_price,
-          final_price_b2c: r.b2c_final_price,
-          original_price_b2b: r.b2b_actual_price,
-          final_price_b2b: r.b2b_final_price
-        }))
-
-        setVariants(mapped)
-
-        const byColor = {}
-        mapped.forEach((v) => {
-          const key = v.color || 'DEFAULT'
-          if (!byColor[key]) byColor[key] = []
-          if (v.image_url) byColor[key].push(v.image_url)
-        })
-        Object.keys(byColor).forEach((k) => {
-          byColor[k] = Array.from(new Set(byColor[k]))
-        })
-        setColorImages(byColor)
-
-        const colors = Object.keys(byColor).filter((c) => c !== 'DEFAULT' && c.trim())
-        const initialColor = colors.length ? product.color || product.colour || colors[0] : null
-        setSelectedColor(initialColor)
-
-        const initialSizes = Array.from(
-          new Set(
-            mapped
-              .filter((v) => (initialColor ? v.color === initialColor : true))
-              .map((v) => v.size)
-              .filter(Boolean)
-          )
-        )
-
-        const preferredSize = initialSizes.includes(product.size) ? product.size : initialSizes[0] || null
-        setSelectedSize(preferredSize)
-      } catch {
-      } finally {
-        setIsLoading(false)
-      }
-    }
-    loadVariants()
+  const pricing = useMemo(() => {
+    const p = product || {}
+    const mrp = toNum(p.price || 0)
+    const offer = toNum(p.discounted_price ?? p.price ?? 0) || mrp
+    return { mrp, offer }
   }, [product])
 
-  const sizesForColor = () => {
-    if (!selectedColor) return Array.from(new Set(variants.map((v) => v.size).filter(Boolean)))
-    return Array.from(new Set(variants.filter((v) => v.color === selectedColor).map((v) => v.size).filter(Boolean)))
-  }
-
-  const availableColors = () => {
-    return Object.keys(colorImages).filter((c) => c !== 'DEFAULT' && c.trim())
-  }
-
-  const mainImage = () => {
-    if (!product) return ''
-    if (selectedColor) {
-      const foundImage = colorImages[selectedColor]?.[0]
-      if (foundImage) return foundImage
-    }
-    if (product.image_url) return product.image_url
-    if (Array.isArray(product.images) && product.images.length) return product.images[0]
-    return ''
-  }
-
-  const handleColorClick = (color) => {
-    setSelectedColor(color)
-    const sizes = Array.from(new Set(variants.filter((v) => v.color === color).map((v) => v.size).filter(Boolean)))
-    const newSize = sizes.includes(selectedSize) ? selectedSize : sizes[0] || null
-    setSelectedSize(newSize)
-  }
-
-  const handleSizeClick = (size) => {
-    setSelectedSize(size)
-  }
-
-  const getActivePricing = () => {
-    const variant = variants.find((v) => v.color === selectedColor && v.size === selectedSize) || null
-    const base = variant || product || {}
-    if (userType === 'B2B') {
-      const mrp = toNum(base.original_price_b2b || base.b2b_actual_price || 0)
-      const offer = toNum(base.final_price_b2b || base.b2b_final_price || 0) || mrp
-      return { mrp, offer }
-    }
-    const mrp = toNum(base.original_price_b2c || base.b2c_actual_price || 0)
-    const offer = toNum(base.final_price_b2c || base.b2c_final_price || 0) || mrp
-    return { mrp, offer }
-  }
-
-  const getDiscount = () => {
-    const { mrp, offer } = getActivePricing()
-    if (!mrp || !offer || mrp <= offer) return 0
+  const discount = useMemo(() => {
+    const { mrp, offer } = pricing
+    if (!mrp || mrp <= 0 || offer >= mrp) return 0
     return Math.round(((mrp - offer) / mrp) * 100)
-  }
+  }, [pricing])
 
-  const handleAdd = async (type) => {
+  const ensureLoggedIn = () => {
     const effectiveUserId =
       (typeof window !== 'undefined' ? sessionStorage.getItem('userId') : '') ||
       (typeof window !== 'undefined' ? localStorage.getItem('userId') : '') ||
@@ -280,47 +173,33 @@ const CheckoutPage = () => {
       setTimeout(() => setPopupMessage(''), 2000)
       try {
         window.dispatchEvent(new CustomEvent('open-login'))
-      } catch { }
-      return
+      } catch {}
+      return null
     }
+    return String(effectiveUserId)
+  }
 
-    if (!product?.id) {
+  const handleAdd = async (type) => {
+    const uid = ensureLoggedIn()
+    if (!uid) return
+
+    const pid = product?.product_id ?? product?.id
+    if (!isIntId(pid)) {
       setPopupMessage('Product not found')
       setTimeout(() => setPopupMessage(''), 2000)
       return
     }
 
-    const colors = availableColors()
-    const needsColor = colors.length > 0
-    const sizes = sizesForColor()
-    const needsSize = sizes.length > 0
-
-    if (needsColor && !selectedColor) {
-      setPopupMessage('Please select a color')
-      setTimeout(() => setPopupMessage(''), 2000)
-      return
-    }
-
-    if (needsSize && !selectedSize) {
-      setPopupMessage('Please select a size')
-      setTimeout(() => setPopupMessage(''), 2000)
-      return
-    }
-
-    const chosenVariant =
-      variants.find((v) => (needsColor ? v.color === selectedColor : true) && (needsSize ? v.size === selectedSize : true)) || null
-
-    const pid = product.id
-
     const item = {
       ...product,
-      ...(chosenVariant || {}),
-      product_id: pid,
-      variant_id: chosenVariant?.id || null,
-      image_url: mainImage(),
-      selectedColor: selectedColor || '',
-      selectedSize: selectedSize || '',
-      quantity: 1
+      id: Number(pid),
+      product_id: Number(pid),
+      name: getName(product),
+      brand: getBrand(product),
+      images: getImages(product),
+      image_url: getMainImage(product),
+      quantity: 1,
+      userType: userType || 'B2C'
     }
 
     if (type === 'bag') {
@@ -329,13 +208,11 @@ const CheckoutPage = () => {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            user_id: String(effectiveUserId),
+            user_id: Number(uid),
             product_id: Number(pid),
-            selected_size: selectedSize ? selectedSize : null,
-            selected_color: selectedColor ? selectedColor : null,
-            quantity: 1
+            quantity: 1,
+            variant: null
           })
-
         })
 
         if (resp.ok) {
@@ -362,7 +239,7 @@ const CheckoutPage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: String(effectiveUserId),
+          user_id: Number(uid),
           product_id: Number(pid)
         })
       })
@@ -381,10 +258,9 @@ const CheckoutPage = () => {
     }
   }
 
-  const pricing = getActivePricing()
-  const discount = getDiscount()
-  const colors = availableColors()
-  const sizes = sizesForColor()
+  const name = getName(product)
+  const brand = getBrand(product)
+  const img = product ? getMainImage(product) : ''
 
   return (
     <div className="co-wrap">
@@ -394,37 +270,9 @@ const CheckoutPage = () => {
           <div className="co-container">
             <div className="co-left">
               <div className="co-media">
-                <div className="co-image-frame">{product && <img src={mainImage()} alt={product.product_name} className="co-image" />}</div>
-
-                {colors.length > 0 && selectedColor && colorImages[selectedColor]?.length > 1 && (
-                  <div className="co-thumbs">
-                    {colorImages[selectedColor].map((src, i) => (
-                      <button
-                        key={i}
-                        className={`co-thumb ${i === 0 ? 'active' : ''}`}
-                        onClick={() => {
-                          const c = selectedColor
-                          if (!c) return
-                          setColorImages((prev) => {
-                            const copy = { ...prev }
-                            const arr = copy[c] || []
-                            if (arr[0] !== src) {
-                              const idx = arr.indexOf(src)
-                              if (idx > -1) {
-                                arr.splice(idx, 1)
-                                arr.unshift(src)
-                                copy[c] = [...arr]
-                              }
-                            }
-                            return copy
-                          })
-                        }}
-                      >
-                        <img src={src} alt={`thumb-${i}`} />
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <div className="co-image-frame">
+                  {img ? <img src={img} alt={name} className="co-image" /> : <div className="co-image" />}
+                </div>
               </div>
             </div>
 
@@ -437,8 +285,8 @@ const CheckoutPage = () => {
               ) : (
                 <>
                   <div className="co-title">
-                    <h1 className="co-brand">{product?.brand || 'Brand'}</h1>
-                    <h2 className="co-name">{product?.product_name || 'Product name'}</h2>
+                    <h1 className="co-brand">{brand || 'Brand'}</h1>
+                    <h2 className="co-name">{name || 'Product name'}</h2>
                   </div>
 
                   <div className="co-price-card">
@@ -448,49 +296,10 @@ const CheckoutPage = () => {
                     </div>
 
                     <div className="co-mrp">
-                      <span className="co-mrp-strike">₹{money(pricing.mrp || 0)}</span>
+                      {discount > 0 && <span className="co-mrp-strike">₹{money(pricing.mrp || 0)}</span>}
                       <span className="co-tax">Inclusive of all taxes</span>
                     </div>
                   </div>
-
-                  {colors.length > 0 && (
-                    <div className="co-section">
-                      <div className="co-section-head">
-                        <h3>Color</h3>
-                        {selectedColor && <span className="co-chip">{selectedColor}</span>}
-                      </div>
-
-                      <div className="co-colors">
-                        {colors.map((c) => (
-                          <button
-                            key={c}
-                            className={`co-swatch ${selectedColor === c ? 'active' : ''}`}
-                            onClick={() => handleColorClick(c)}
-                            title={c}
-                          >
-                            <span className="co-swatch-text">{c}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {sizes.length > 0 && (
-                    <div className="co-section">
-                      <div className="co-section-head">
-                        <h3>Size</h3>
-                        {selectedSize && <span className="co-chip">{selectedSize}</span>}
-                      </div>
-
-                      <div className="co-sizes">
-                        {sizes.map((s) => (
-                          <button key={s} className={`co-size ${selectedSize === s ? 'selected' : ''}`} onClick={() => handleSizeClick(s)}>
-                            {s}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   <div className="co-actions">
                     <button className="btn blue ghost" onClick={() => handleAdd('wishlist')}>

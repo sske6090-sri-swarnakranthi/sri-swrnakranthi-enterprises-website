@@ -3,14 +3,14 @@ import './Orders.css'
 import { useNavigate } from 'react-router-dom'
 import { FaChevronRight } from 'react-icons/fa'
 
-const DEFAULT_API_BASE = 'http://localhost:5000'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = String(API_BASE_RAW || '').replace(/\/+$/, '')
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
-const STATUS_ORDER = ['Order Placed', 'Confirmed', 'Shipped', 'Out For Delivery', 'Delivered', 'RTO', 'Cancelled']
+const STATUS_ORDER = ['Order Placed', 'Confirmed', 'Packed', 'Shipped', 'Out For Delivery', 'Delivered', 'RTO', 'Cancelled']
 
 function normalizeStatus(s) {
   if (!s) return 'Order Placed'
@@ -20,12 +20,17 @@ function normalizeStatus(s) {
   if (t.includes('deliver')) return 'Delivered'
   if (t.includes('out for')) return 'Out For Delivery'
   if (t.includes('ship') || t.includes('dispatch') || t.includes('in transit')) return 'Shipped'
+  if (t.includes('pack')) return 'Packed'
   if (t.includes('confirm') || t.includes('process') || t.includes('accept')) return 'Confirmed'
+  if (t.includes('place')) return 'Order Placed'
   return 'Order Placed'
 }
 
-function byStatusRank(a, b) {
-  return STATUS_ORDER.indexOf(normalizeStatus(a.status)) - STATUS_ORDER.indexOf(normalizeStatus(b.status))
+function byNewest(a, b) {
+  const ta = a.created_at ? new Date(a.created_at).getTime() : 0
+  const tb = b.created_at ? new Date(b.created_at).getTime() : 0
+  if (tb !== ta) return tb - ta
+  return Number(b.id || 0) - Number(a.id || 0)
 }
 
 function firstItem(items) {
@@ -57,35 +62,73 @@ function firstColor(items) {
   return it?.color || it?.colour || it?.variant_color || it?.variantColor || ''
 }
 
+const normMobile = (v) => String(v || '').replace(/\D/g, '').slice(0, 10)
+
 const Orders = ({ user }) => {
   const navigate = useNavigate()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('All')
   const [error, setError] = useState('')
-
-  const [loginEmail, setLoginEmail] = useState(sessionStorage.getItem('userEmail') || '')
-  const [loginMobile, setLoginMobile] = useState(sessionStorage.getItem('userMobile') || '')
+  const [loginEmail, setLoginEmail] = useState('')
+  const [loginMobile, setLoginMobile] = useState('')
 
   useEffect(() => {
     const refreshFromStorage = () => {
-      setLoginEmail(sessionStorage.getItem('userEmail') || '')
-      setLoginMobile(sessionStorage.getItem('userMobile') || '')
+      const e = sessionStorage.getItem('userEmail') || localStorage.getItem('userEmail') || ''
+      const m = sessionStorage.getItem('userMobile') || localStorage.getItem('userMobile') || ''
+      setLoginEmail(String(e || '').trim())
+      setLoginMobile(normMobile(m))
     }
     refreshFromStorage()
     window.addEventListener('focus', refreshFromStorage)
-    return () => window.removeEventListener('focus', refreshFromStorage)
+    window.addEventListener('storage', refreshFromStorage)
+    return () => {
+      window.removeEventListener('focus', refreshFromStorage)
+      window.removeEventListener('storage', refreshFromStorage)
+    }
   }, [])
 
-  const email = (user?.email || loginEmail || '').trim()
-  const mobile = (user?.phone || user?.mobile || loginMobile || '').trim()
+  const email = String(user?.email || loginEmail || '').trim()
+  const mobile = normMobile(user?.phone || user?.mobile || loginMobile || '')
 
   const money = (n) =>
-    new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(Number(n || 0))
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(Number(n || 0))
+
+  const mapOrders = (rawList) => {
+    const list = Array.isArray(rawList) ? rawList : []
+    return list
+      .map((s) => {
+        const items = Array.isArray(s.items) ? s.items : Array.isArray(s.order_items) ? s.order_items : []
+        const img = firstImg(items)
+        const pname = firstName(items)
+        const brand = firstBrand(items)
+        const color = firstColor(items)
+        const itemCount = items.reduce((a, it) => a + Number(it?.qty ?? it?.quantity ?? 1), 0)
+        const st = normalizeStatus(s.order_status || s.status || 'placed')
+        const payable =
+          Number(s?.total_amount ?? 0) ||
+          Number(s?.totals?.payable ?? 0) ||
+          Number(s?.totals?.total ?? 0) ||
+          Number(s?.total ?? 0) ||
+          0
+
+        return {
+          id: s.id ?? s.order_id ?? null,
+          created_at: s.created_at ?? s.createdAt ?? null,
+          status: st,
+          rawStatus: s.order_status || s.status || '',
+          name: pname && itemCount > 1 ? `${pname} +${itemCount - 1}` : pname || 'Order',
+          brand,
+          color,
+          image: img,
+          offerPrice: payable,
+          itemsCount: itemCount
+        }
+      })
+      .filter((x) => x.id)
+      .sort(byNewest)
+  }
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -102,41 +145,33 @@ const Orders = ({ user }) => {
         if (email) q.set('email', email)
         if (mobile) q.set('mobile', mobile)
 
-        const res = await fetch(`${API_BASE}/api/orders/web/by-user?${q.toString()}`, { cache: 'no-store' })
-        if (!res.ok) throw new Error('bad')
+        const endpoints = [
+          `${API_BASE}/api/orders/web/by-user?${q.toString()}`,
+          `${API_BASE}/api/orders/by-user?${q.toString()}`,
+          `${API_BASE}/api/orders/web/user?${q.toString()}`
+        ]
 
-        const data = await res.json()
-        const list = Array.isArray(data) ? data : Array.isArray(data.items) ? data.items : []
+        let data = null
+        for (const url of endpoints) {
+          try {
+            const res = await fetch(url, { cache: 'no-store' })
+            const json = await res.json().catch(() => null)
+            if (res.ok && json != null) {
+              data = json
+              break
+            }
+          } catch {}
+        }
 
-        const mapped = list.map((s) => {
-          const items = Array.isArray(s.items) ? s.items : []
-          const img = firstImg(items)
-          const pname = firstName(items)
-          const brand = firstBrand(items)
-          const color = firstColor(items)
-          const itemCount = items.reduce((a, it) => a + Number(it?.qty || 1), 0)
-          const st = normalizeStatus(s.status || 'PLACED')
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.items)
+            ? data.items
+            : Array.isArray(data?.orders)
+              ? data.orders
+              : []
 
-          const payable =
-            Number(s?.totals?.payable ?? 0) ||
-            Number(s?.totals?.total ?? 0) ||
-            Number(s?.total ?? 0) ||
-            0
-
-          return {
-            id: s.id,
-            status: st,
-            rawStatus: s.status || '',
-            name: pname && itemCount > 1 ? `${pname} +${itemCount - 1}` : pname || 'Order',
-            brand,
-            color,
-            image: img,
-            offerPrice: payable,
-            itemsCount: itemCount
-          }
-        })
-
-        setOrders([...mapped].sort(byStatusRank))
+        setOrders(mapOrders(list))
       } catch {
         setOrders([])
         setError('Could not load your orders right now.')
@@ -148,7 +183,7 @@ const Orders = ({ user }) => {
     fetchOrders()
   }, [email, mobile])
 
-  const statusList = ['All', ...STATUS_ORDER]
+  const statusList = useMemo(() => ['All', ...STATUS_ORDER], [])
 
   const filtered = useMemo(() => {
     if (filter === 'All') return orders
@@ -261,11 +296,7 @@ const Orders = ({ user }) => {
                     tabIndex={0}
                   >
                     <div className="orders-media">
-                      {order.image ? (
-                        <img src={order.image} alt={order.name || 'Item'} loading="lazy" />
-                      ) : (
-                        <div className="orders-ph" />
-                      )}
+                      {order.image ? <img src={order.image} alt={order.name || 'Item'} loading="lazy" /> : <div className="orders-ph" />}
                       <div className={`orders-badge orders-badge--${statusClass}`}>{st}</div>
                       <div className="orders-glow" />
                     </div>

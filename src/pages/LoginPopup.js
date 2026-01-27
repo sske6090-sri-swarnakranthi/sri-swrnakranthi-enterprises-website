@@ -1,3 +1,4 @@
+// D:\gifts-website\src\pages\LoginPopup.js
 import React, { useState, useRef, useEffect } from 'react'
 import { FaGoogle } from 'react-icons/fa'
 import { FiX, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
@@ -5,12 +6,12 @@ import './LoginPopup.css'
 import ForgotPasswordPopup from './ForgotPasswordPopup'
 import SignupPopup from './SignupPopup'
 
-const DEFAULT_API_BASE = 'http://localhost:5000'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = API_BASE_RAW.replace(/\/+$/, '')
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
 function persistSession(payload = {}) {
   const token = payload?.token || payload?.userToken || ''

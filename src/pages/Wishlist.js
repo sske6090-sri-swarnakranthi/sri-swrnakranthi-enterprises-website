@@ -7,12 +7,12 @@ import Footer from './Footer'
 import { useWishlist } from '../WishlistContext'
 import { FaTimes } from 'react-icons/fa'
 
-const DEFAULT_API_BASE = 'http://localhost:5000'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = API_BASE_RAW.replace(/\/+$/, '')
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
 const getUserId = () => {
   if (typeof window === 'undefined') return ''
@@ -35,6 +35,11 @@ const writeWishlistLocal = (userId, list) => {
   try {
     localStorage.setItem(`wishlist:local:${userId}`, JSON.stringify(list || []))
   } catch {}
+}
+
+const toNum = (v) => {
+  const n = parseFloat(v)
+  return Number.isFinite(n) ? n : 0
 }
 
 const Wishlist = () => {
@@ -71,10 +76,13 @@ const Wishlist = () => {
   const normalizeWishlistItem = (row) => {
     const images = Array.isArray(row?.images) ? row.images : []
     const image_url = row?.image_url || (images.length ? images[0] : '/images/placeholder.jpg')
+    const name = row?.name ?? row?.product_name ?? ''
     return {
       ...row,
       id: row?.product_id || row?.id,
       product_id: row?.product_id || row?.id,
+      name,
+      product_name: name,
       image_url,
       images
     }
@@ -90,7 +98,7 @@ const Wishlist = () => {
     setIsLoading(true)
     try {
       const res = await fetch(`${API_BASE}/api/wishlist/${userId}`)
-      const data = await res.json()
+      const data = await res.json().catch(() => null)
       const arr = Array.isArray(data) ? data.map(normalizeWishlistItem) : []
       setWishlistItems(arr)
       writeWishlistLocal(userId, arr)
@@ -152,13 +160,8 @@ const Wishlist = () => {
   const fmt = (n) => Number(n || 0).toFixed(2)
 
   const getItemPricing = (item) => {
-    if (userType === 'B2B') {
-      const mrp = Number(item.b2b_actual_price ?? item.b2c_actual_price ?? 0)
-      const offer = Number(item.b2b_final_price ?? item.b2c_final_price ?? mrp)
-      return { mrp, offer }
-    }
-    const mrp = Number(item.b2c_actual_price ?? item.b2b_actual_price ?? 0)
-    const offer = Number(item.b2c_final_price ?? item.b2b_final_price ?? mrp)
+    const mrp = toNum(item?.price)
+    const offer = toNum(item?.discounted_price ?? item?.price)
     return { mrp, offer }
   }
 
@@ -200,6 +203,7 @@ const Wishlist = () => {
             {wishlistItems.map((item, index) => {
               const { mrp, offer } = getItemPricing(item)
               const discountPct = mrp > 0 && offer < mrp ? Math.round(((mrp - offer) / mrp) * 100) : 0
+              const displayName = item?.name ?? item?.product_name ?? ''
 
               return (
                 <div key={`${item.product_id ?? index}`} className="wishlist-card">
@@ -210,7 +214,7 @@ const Wishlist = () => {
                       navigate('/checkout')
                     }}
                   >
-                    <img src={item.image_url} alt={item.product_name} loading="lazy" decoding="async" />
+                    <img src={item.image_url} alt={displayName} loading="lazy" decoding="async" />
 
                     <button
                       type="button"
@@ -229,13 +233,13 @@ const Wishlist = () => {
 
                   <div className="wishlist-body">
                     <p className="wishlist-brand">{item.brand || 'Brand'}</p>
-                    <p className="wishlist-name" title={item.product_name}>
-                      {item.product_name}
+                    <p className="wishlist-name" title={displayName}>
+                      {displayName}
                     </p>
 
                     <div className="wishlist-price">
                       <span className="wishlist-offer">₹{fmt(offer)}</span>
-                      <span className="wishlist-mrp">₹{fmt(mrp)}</span>
+                      {discountPct > 0 && <span className="wishlist-mrp">₹{fmt(mrp)}</span>}
                     </div>
 
                     <button

@@ -57,41 +57,23 @@ export default function Home1() {
       <Navbar />
       <div className="spacer-new-home">
         <section className="home1-hero-new-home-2">
-          <div className="home1-hero-frame-new-home-2">
-            <Swiper
-              className="home1-hero-swiper-new-home-2"
-              modules={[Autoplay]}
-              loop
-              slidesPerView={1}
-              autoplay={{ delay: 3500, disableOnInteraction: false }}
-              speed={900}
-            >
-              <SwiperSlide>
-                <div className="home1-hero-slide-new-home-2">
-                  <img src={getImage('/images/banners/main-banner9.jpg')} alt="Main Banner" loading="eager" />
-                </div>
-              </SwiperSlide>
+  <div className="home1-hero-frame-new-home-2">
+    <img
+      className="home1-hero-banner-img"
+      src={getImage('/images/banners/home-banner.jpg')}
+      alt="Sri Swarnakranthi Enterprises"
+      loading="eager"
+    />
 
-              <SwiperSlide>
-                <div className="home1-hero-slide-new-home-2">
-                  <img src={getImage('/images/banners/main-banner10.jpg')} alt="Banner 2" loading="lazy" decoding="async" />
-                </div>
-              </SwiperSlide>
+    <div className="home1-hero-overlay" />
 
-              <SwiperSlide>
-                <div className="home1-hero-slide-new-home-2">
-                  <img src={getImage('/images/banners/main-banner11.jpg')} alt="Banner 3" loading="lazy" decoding="async" />
-                </div>
-              </SwiperSlide>
+    <div className="home1-hero-content">
+      <h1 className="home1-hero-title">Sri Swarnakranthi Enterprises</h1>
+      <p className="home1-hero-subtitle">Custom gifts and printing solutions</p>
+    </div>
+  </div>
+</section>
 
-              <SwiperSlide>
-                <div className="home1-hero-slide-new-home-2">
-                  <img src={getImage('/images/banners/main-banner12.jpg')} alt="Banner 4" loading="lazy" decoding="async" />
-                </div>
-              </SwiperSlide>
-            </Swiper>
-          </div>
-        </section>
 
 
 

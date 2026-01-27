@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import { useCart } from '../CartContext'
@@ -8,12 +8,12 @@ import { FaTimes, FaCheck, FaTag } from 'react-icons/fa'
 import Popup from './Popup'
 import { useNavigate } from 'react-router-dom'
 
-const DEFAULT_API_BASE = 'http://localhost:5000'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = API_BASE_RAW.replace(/\/+$/, '')
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
 const isIntId = (v) => {
   const n = Number(v)
@@ -35,6 +35,11 @@ const pickImage = (images) => {
   }
 }
 
+const getProductName = (row) => row?.name ?? row?.product_name ?? ''
+const getBrand = (row) => row?.brand ?? ''
+const getMrp = (row) => Number(row?.price ?? row?.mrp ?? 0)
+const getOffer = (row) => Number(row?.discounted_price ?? row?.offer ?? row?.price ?? 0)
+
 const Cart = () => {
   const navigate = useNavigate()
   const { addToWishlist } = useWishlist()
@@ -50,6 +55,7 @@ const Cart = () => {
   const [giftWrap, setGiftWrap] = useState(false)
   const [toast, setToast] = useState('')
   const [showSuccess, setShowSuccess] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const userId =
     (typeof window !== 'undefined' ? sessionStorage.getItem('userId') : '') ||
@@ -78,40 +84,30 @@ const Cart = () => {
   const fmt = (n) => Number(n || 0).toFixed(2)
 
   const getItemPricing = (item) => {
-    if (userType === 'B2B') {
-      const mrp = Number(item.b2b_actual_price ?? item.b2c_actual_price ?? item.b2b_final_price ?? item.b2c_final_price ?? 0)
-      const offer = Number(item.b2b_final_price ?? item.b2c_final_price ?? mrp)
-      return { mrp, offer }
-    }
-    const mrp = Number(item.b2c_actual_price ?? item.b2b_actual_price ?? item.b2c_final_price ?? item.b2b_final_price ?? 0)
-    const offer = Number(item.b2c_final_price ?? item.b2b_final_price ?? mrp)
+    const mrp = getMrp(item)
+    const offer = getOffer(item) || mrp
     return { mrp, offer }
   }
 
   const normalizeCartRow = (row) => {
-    const image = pickImage(row.images)
+    const image = row?.image_url || pickImage(row?.images)
     return {
-      id: row.cart_id,
-      cart_id: row.cart_id,
-      user_id: row.user_id,
-      product_id: row.product_id,
-      selected_size: row.selected_size,
-      selected_color: row.selected_color,
-      quantity: Number(row.quantity || 1),
-      category: row.category,
-      brand: row.brand,
-      product_name: row.product_name,
-      b2b_actual_price: row.b2b_actual_price,
-      b2b_discount: row.b2b_discount,
-      b2b_final_price: row.b2b_final_price,
-      b2c_actual_price: row.b2c_actual_price,
-      b2c_discount: row.b2c_discount,
-      b2c_final_price: row.b2c_final_price,
-      count: row.count,
-      images: row.images,
+      id: row?.cart_id ?? row?.id,
+      cart_id: row?.cart_id ?? row?.id,
+      user_id: row?.user_id,
+      product_id: row?.product_id,
+      quantity: Number(row?.quantity || 1),
+      variant: row?.variant ?? null,
+      name: row?.name ?? null,
+      product_name: row?.product_name ?? null,
+      brand: row?.brand ?? null,
+      category_slug: row?.category_slug ?? null,
+      price: row?.price ?? null,
+      discounted_price: row?.discounted_price ?? null,
+      description: row?.description ?? null,
+      images: row?.images ?? [],
       image_url: image,
-      created_at: row.created_at,
-      updated_at: row.updated_at
+      created_at: row?.created_at
     }
   }
 
@@ -119,19 +115,24 @@ const Cart = () => {
     if (!userId || !isIntId(userId)) {
       setCartItems([])
       setQuantities({})
+      setLoading(false)
       return
     }
+
+    setLoading(true)
     try {
       const res = await fetch(`${API_BASE}/api/cart/${userId}`, { cache: 'no-store' })
       if (!res.ok) {
         setCartItems([])
         setQuantities({})
+        setLoading(false)
         return
       }
       const data = await res.json()
       const arr = Array.isArray(data) ? data : []
       const normalized = arr.map(normalizeCartRow)
       setCartItems(normalized)
+
       const initialQuantities = normalized.reduce((acc, item) => {
         const key = item.cart_id
         if (key != null) acc[key] = Number(item.quantity || 1)
@@ -141,6 +142,8 @@ const Cart = () => {
     } catch {
       setCartItems([])
       setQuantities({})
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -171,18 +174,19 @@ const Cart = () => {
   }
 
   const handleConfirmRemove = async () => {
-    if (selectedItem && userId) {
+    if (selectedItem && userId && isIntId(userId)) {
       await fetch(`${API_BASE}/api/cart`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user_id: String(userId),
+          cart_id: Number(selectedItem.cart_id),
+          user_id: Number(userId),
           product_id: Number(selectedItem.product_id),
-          selected_size: selectedItem.selected_size,
-          selected_color: selectedItem.selected_color
+          variant: selectedItem.variant ?? null
         })
       })
-      setCartItems((prev) => prev.filter((it) => it.cart_id !== selectedItem.cart_id))
+
+      setCartItems((prev) => prev.filter((it) => String(it.cart_id) !== String(selectedItem.cart_id)))
       removeFromCart(selectedItem.cart_id)
       setToast('Item removed')
       setTimeout(() => setToast(''), 1600)
@@ -191,50 +195,57 @@ const Cart = () => {
   }
 
   const handleQuantityChange = async (cartId, value) => {
-    const quantity = parseInt(value, 10)
+    const quantity = Math.max(1, parseInt(value, 10) || 1)
     setQuantities((prev) => ({ ...prev, [cartId]: quantity }))
-    if (!userId) return
-    const row = cartItems.find((x) => x.cart_id === cartId)
+
+    if (!userId || !isIntId(userId)) return
+    const row = cartItems.find((x) => String(x.cart_id) === String(cartId))
     if (!row) return
+
     await fetch(`${API_BASE}/api/cart`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        user_id: String(userId),
+        cart_id: Number(row.cart_id),
+        user_id: Number(userId),
         product_id: Number(row.product_id),
-        selected_size: row.selected_size,
-        selected_color: row.selected_color,
+        variant: row.variant ?? null,
         quantity
       })
     })
+
     setToast('Quantity updated')
     setTimeout(() => setToast(''), 1200)
   }
 
-  const bagTotal = cartItems.reduce((total, item) => {
-    const key = item.cart_id
-    const qty = quantities[key] || 1
-    const { mrp } = getItemPricing(item)
-    return total + mrp * qty
-  }, 0)
+  const bagTotal = useMemo(() => {
+    return cartItems.reduce((total, item) => {
+      const key = item.cart_id
+      const qty = quantities[key] || 1
+      const { mrp } = getItemPricing(item)
+      return total + mrp * qty
+    }, 0)
+  }, [cartItems, quantities])
 
-  const discountTotal = cartItems.reduce((total, item) => {
-    const key = item.cart_id
-    const qty = quantities[key] || 1
-    const { mrp, offer } = getItemPricing(item)
-    if (!mrp || offer >= mrp) return total
-    return total + (mrp - offer) * qty
-  }, 0)
+  const discountTotal = useMemo(() => {
+    return cartItems.reduce((total, item) => {
+      const key = item.cart_id
+      const qty = quantities[key] || 1
+      const { mrp, offer } = getItemPricing(item)
+      if (!mrp || offer >= mrp) return total
+      return total + (mrp - offer) * qty
+    }, 0)
+  }, [cartItems, quantities])
 
   const subTotalBeforeCoupon = bagTotal - discountTotal
-  const rawCouponDiscount = (subTotalBeforeCoupon * couponDiscountPct) / 100
-  const couponDiscount = rawCouponDiscount
+  const couponDiscount = (subTotalBeforeCoupon * couponDiscountPct) / 100
   const subTotal = subTotalBeforeCoupon - couponDiscount
   const youPay = subTotal + (giftWrap ? 39 : 0)
   const totalSaving = discountTotal + couponDiscount
 
   const proceedToCheckout = () => {
     if (!cartItems.length) return
+
     const payload = {
       totals: {
         bagTotal,
@@ -255,14 +266,14 @@ const Cart = () => {
           qty,
           price: Number(offer),
           mrp: Number(mrp),
-          size: item.selected_size || '',
-          colour: item.selected_color || '',
+          variant: item.variant ?? '',
           image_url: item.image_url || null,
-          product_name: item.product_name,
-          brand: item.brand
+          product_name: getProductName(item),
+          brand: getBrand(item)
         }
       })
     }
+
     sessionStorage.setItem('tk_checkout_payload', JSON.stringify(payload))
     navigate('/order/checkout')
   }
@@ -271,7 +282,11 @@ const Cart = () => {
     <div className="cart-wrap">
       <Navbar />
       <div className="cart-container">
-        {cartItems.length === 0 ? (
+        {loading ? (
+          <div className="cart-empty">
+            <h2>Loading your bag...</h2>
+          </div>
+        ) : cartItems.length === 0 ? (
           <div className="cart-empty">
             <img src="/images/emptyWishlist.avif" alt="Empty Cart" />
             <h2>Your Bag is empty</h2>
@@ -296,6 +311,7 @@ const Cart = () => {
                   const qty = quantities[key] || 1
                   const { mrp, offer } = getItemPricing(item)
                   const discountPct = mrp > 0 && offer < mrp ? Math.round(((mrp - offer) / mrp) * 100) : 0
+                  const name = getProductName(item)
 
                   return (
                     <div className="cart-card" key={key}>
@@ -304,26 +320,28 @@ const Cart = () => {
                       </button>
 
                       <div className="card-media">
-                        <img src={item.image_url} alt={item.product_name} />
+                        <img src={item.image_url} alt={name} />
                       </div>
 
                       <div className="card-body">
                         <div className="card-top">
-                          <h4 className="brand">{item.brand}</h4>
-                          <p className="name">{item.product_name}</p>
+                          <h4 className="brand">{getBrand(item) || 'Brand'}</h4>
+                          <p className="name">{name || 'Product'}</p>
                         </div>
 
                         <div className="card-opts">
-                          <div className="opt">
-                            <span className="opt-label">Color</span>
-                            <span className="color-dot" style={{ backgroundColor: (item.selected_color || '').toLowerCase() }} />
-                          </div>
-                          <div className="opt">
-                            <span className="opt-label">Size</span>
-                            <select value={item.selected_size || ''} className="select" disabled>
-                              <option value={item.selected_size || ''}>{item.selected_size || '-'}</option>
-                            </select>
-                          </div>
+                          {item.variant ? (
+                            <div className="opt">
+                              <span className="opt-label">Variant</span>
+                              <span className="select">{item.variant}</span>
+                            </div>
+                          ) : (
+                            <div className="opt">
+                              <span className="opt-label">Variant</span>
+                              <span className="select">-</span>
+                            </div>
+                          )}
+
                           <div className="opt">
                             <span className="opt-label">Qty</span>
                             <select value={qty} className="select" onChange={(e) => handleQuantityChange(key, e.target.value)}>
@@ -421,9 +439,35 @@ const Cart = () => {
             subMessage="It took you so long to find this item, wishlist instead."
             onConfirm={handleConfirmRemove}
             onCancel={() => setShowPopup(false)}
-            onWishlist={() => {
+            onWishlist={async () => {
+              try {
+                if (userId && isIntId(userId) && selectedItem?.product_id) {
+                  await fetch(`${API_BASE}/api/wishlist`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: Number(userId), product_id: Number(selectedItem.product_id) })
+                  })
+                }
+              } catch {}
+
               addToWishlist(selectedItem)
-              setCartItems((prev) => prev.filter((i) => i.cart_id !== selectedItem.cart_id))
+
+              try {
+                if (userId && isIntId(userId) && selectedItem?.cart_id) {
+                  await fetch(`${API_BASE}/api/cart`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      cart_id: Number(selectedItem.cart_id),
+                      user_id: Number(userId),
+                      product_id: Number(selectedItem.product_id),
+                      variant: selectedItem.variant ?? null
+                    })
+                  })
+                }
+              } catch {}
+
+              setCartItems((prev) => prev.filter((i) => String(i.cart_id) !== String(selectedItem.cart_id)))
               setShowPopup(false)
               setToast('Moved to wishlist')
               setTimeout(() => setToast(''), 1500)

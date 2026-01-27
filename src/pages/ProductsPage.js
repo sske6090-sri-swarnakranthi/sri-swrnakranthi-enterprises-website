@@ -4,12 +4,12 @@ import Navbar from './Navbar'
 import FilterSidebar from './FilterSidebar'
 import { FiHeart } from 'react-icons/fi'
 
-const DEFAULT_API_BASE = 'http://localhost:5000'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = API_BASE_RAW.replace(/\/+$/, '')
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
 const getUserId = () => {
   if (typeof window === 'undefined') return ''
@@ -38,12 +38,24 @@ const isWished = (list, id) => list.some((x) => String(x?.product_id ?? x?.id) =
 
 const toNum = (v) => {
   const n = parseFloat(v)
-  return isNaN(n) ? 0 : n
+  return Number.isFinite(n) ? n : 0
 }
 
 const money = (v) => {
   const n = toNum(v)
   return n.toLocaleString('en-IN', { maximumFractionDigits: 2, minimumFractionDigits: 2 })
+}
+
+const getProductName = (p) => p?.name ?? p?.product_name ?? ''
+const getFinalPrice = (p) => p?.discounted_price ?? p?.price ?? 0
+const getMrp = (p) => p?.price ?? 0
+
+const getDiscountPercent = (p) => {
+  const mrp = toNum(getMrp(p))
+  const final = toNum(getFinalPrice(p))
+  if (mrp <= 0) return 0
+  const off = ((mrp - final) / mrp) * 100
+  return off > 0 ? Math.round(off) : 0
 }
 
 export default function ProductsPage() {
@@ -94,7 +106,29 @@ export default function ProductsPage() {
     return () => window.removeEventListener('storage', onStorage)
   }, [])
 
-  const filtered = useMemo(() => items, [items])
+  const filtered = useMemo(() => {
+    const q = String(filters?.q || '').trim().toLowerCase()
+    const cat = String(filters?.category || 'all').toLowerCase()
+    const brand = String(filters?.brand || 'all').toLowerCase()
+    const onlyDiscount = !!filters?.onlyDiscount
+    const cap = Number.isFinite(filters?.priceCap) ? filters.priceCap : Infinity
+
+    return (items || []).filter((p) => {
+      const name = getProductName(p).toLowerCase()
+      const b = String(p?.brand || '').toLowerCase()
+      const c = String(p?.category_slug || '').toLowerCase()
+      const price = toNum(getFinalPrice(p))
+      const discount = getDiscountPercent(p)
+
+      if (q && !name.includes(q) && !b.includes(q) && !c.includes(q)) return false
+      if (cat !== 'all' && c !== cat) return false
+      if (brand !== 'all' && b !== brand) return false
+      if (onlyDiscount && discount <= 0) return false
+      if (price > cap) return false
+
+      return true
+    })
+  }, [items, filters])
 
   const handleToggleWish = async (p) => {
     if (!userId) {
@@ -129,17 +163,13 @@ export default function ProductsPage() {
       const payload = {
         id: p.id,
         product_id: p.id,
-        product_name: p.product_name,
+        name: p.name,
         brand: p.brand,
-        category: p.category,
+        category_slug: p.category_slug,
         images: p.images,
         image_url: Array.isArray(p.images) && p.images.length ? p.images[0] : '',
-        b2c_actual_price: p.b2c_actual_price,
-        b2c_discount: p.b2c_discount,
-        b2c_final_price: p.b2c_final_price,
-        b2b_actual_price: p.b2b_actual_price,
-        b2b_discount: p.b2b_discount,
-        b2b_final_price: p.b2b_final_price
+        price: p.price,
+        discounted_price: p.discounted_price
       }
 
       const next = wished
@@ -159,52 +189,58 @@ export default function ProductsPage() {
   }
 
   return (
-    <div className="products-page-container">
-      <Navbar />
-      <div className="filters-wrap">
+    <div className="pp-page">
+      <div className="pp-nav">
+        <Navbar />
+      </div>
+
+      <div className="pp-filters">
         <FilterSidebar items={items} onChange={setFilters} initialFilters={filters} />
       </div>
-      <div className="products-page">
+
+      <div className="pp-content">
         {loading && (
-          <div className="products-state">
-            <div className="spinner" />
+          <div className="pp-state">
+            <div className="pp-spinner" />
             <span>Loading products…</span>
           </div>
         )}
 
         {!loading && error && (
-          <div className="products-state error">
+          <div className="pp-state pp-error">
             <span>{error}</span>
           </div>
         )}
 
         {!loading && !error && filtered.length === 0 && (
-          <div className="products-state">
+          <div className="pp-state">
             <span>No products found</span>
           </div>
         )}
 
         {!loading && !error && filtered.length > 0 && (
-          <div className="products-grid">
+          <div className="pp-grid">
             {filtered.map((p) => {
               const img = Array.isArray(p.images) && p.images.length ? p.images[0] : ''
-              const price = p.b2c_final_price ?? p.b2c_actual_price ?? 0
-              const discount = p.b2c_discount ?? 0
+              const price = getFinalPrice(p)
+              const mrp = getMrp(p)
+              const discount = getDiscountPercent(p)
               const wished = isWished(wishlistLocal, p.id)
               const busy = String(busyId) === String(p.id)
+              const name = getProductName(p)
 
               return (
-                <div key={p.id} className="product-card">
-                  <div className="product-image-wrap">
+                <div key={p.id} className="pp-card">
+                  <div className="pp-media">
                     {img ? (
-                      <img src={img} alt={p.product_name} className="product-image" />
+                      <img src={img} alt={name} className="pp-img" />
                     ) : (
-                      <div className="product-image-placeholder">No Image</div>
+                      <div className="pp-img ph">No Image</div>
                     )}
 
                     <button
                       type="button"
-                      className={`wish-btn ${wished ? 'active' : ''} ${busy ? 'disabled' : ''}`}
+                      className={`pp-wish ${wished ? 'active' : ''} ${busy ? 'disabled' : ''}`}
                       onClick={() => handleToggleWish(p)}
                       aria-label="wishlist"
                       disabled={busy}
@@ -212,21 +248,21 @@ export default function ProductsPage() {
                       <FiHeart />
                     </button>
 
-                    {toNum(discount) > 0 && <div className="badge">{toNum(discount)}% OFF</div>}
+                    {toNum(discount) > 0 && <div className="pp-badge">{toNum(discount)}% OFF</div>}
                   </div>
 
-                  <div className="product-body">
-                    <div className="product-top">
-                      <div className="product-brand">{p.brand}</div>
-                      <div className="product-name">{p.product_name}</div>
+                  <div className="pp-body">
+                    <div className="pp-brand">{p.brand}</div>
+                    <div className="pp-name" title={name}>
+                      {name}
                     </div>
 
-                    <div className="product-price">
-                      <span className="price">₹{money(price)}</span>
-                      {toNum(discount) > 0 && <span className="mrp">₹{money(p.b2c_actual_price)}</span>}
+                    <div className="pp-priceRow">
+                      <span className="pp-price">₹{money(price)}</span>
+                      {toNum(discount) > 0 && <span className="pp-mrp">₹{money(mrp)}</span>}
                     </div>
 
-                    <button className="view-btn" type="button">
+                    <button className="pp-btn" type="button">
                       View Details
                     </button>
                   </div>
