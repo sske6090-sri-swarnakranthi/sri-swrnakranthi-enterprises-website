@@ -1,16 +1,17 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import './OrderDetails.css'
 import { FaArrowLeft, FaCheckCircle, FaSyncAlt, FaBoxOpen, FaUserCircle, FaMapMarkerAlt, FaCreditCard } from 'react-icons/fa'
 
-const DEFAULT_API_BASE = 'http://localhost:5000'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
+  (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE_URL) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = String(API_BASE_RAW || '').replace(/\/+$/, '')
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
 function toUpper(s) {
   return String(s || '').toUpperCase()
@@ -44,7 +45,7 @@ export default function OrderDetails() {
   const [loading, setLoading] = useState(true)
   const [refreshedAt, setRefreshedAt] = useState('')
 
-  const fetchProductViaEAN = async (ean) => {
+  const fetchProductViaEAN = useCallback(async (ean) => {
     try {
       const r = await fetch(`${API_BASE}/api/products/by-ean/${encodeURIComponent(ean)}`)
       if (!r.ok) return null
@@ -52,9 +53,9 @@ export default function OrderDetails() {
     } catch {
       return null
     }
-  }
+  }, [])
 
-  const fetchProductViaId = async (pid) => {
+  const fetchProductViaId = useCallback(async (pid) => {
     try {
       const r = await fetch(`${API_BASE}/api/products/${encodeURIComponent(pid)}`)
       if (!r.ok) return null
@@ -62,89 +63,92 @@ export default function OrderDetails() {
     } catch {
       return null
     }
-  }
+  }, [])
 
-  const enrichItems = async (rawItems) => {
-    const list = Array.isArray(rawItems) ? rawItems : []
-    const enriched = await Promise.all(
-      list.map(async (it) => {
-        const ean =
-          it?.ean_code ||
-          it?.ean ||
-          it?.barcode ||
-          it?.barcode_value ||
-          it?.product_ean ||
-          it?.productEAN
+  const enrichItems = useCallback(
+    async (rawItems) => {
+      const list = Array.isArray(rawItems) ? rawItems : []
+      const enriched = await Promise.all(
+        list.map(async (it) => {
+          const ean =
+            it?.ean_code ||
+            it?.ean ||
+            it?.barcode ||
+            it?.barcode_value ||
+            it?.product_ean ||
+            it?.productEAN
 
-        const pid = it?.product_id || it?.id || it?.variant_id
+          const pid = it?.product_id || it?.id || it?.variant_id
 
-        let d = null
-        if (ean) d = await fetchProductViaEAN(ean)
-        if (!d && pid) d = await fetchProductViaId(pid)
+          let d = null
+          if (ean) d = await fetchProductViaEAN(ean)
+          if (!d && pid) d = await fetchProductViaId(pid)
 
-        const name =
-          it?.product_name ||
-          it?.name ||
-          it?.title ||
-          d?.product_name ||
-          d?.name ||
-          d?.title ||
-          'Product'
+          const name =
+            it?.product_name ||
+            it?.name ||
+            it?.title ||
+            d?.product_name ||
+            d?.name ||
+            d?.title ||
+            'Product'
 
-        const brand =
-          it?.brand ||
-          it?.brand_name ||
-          it?.brandName ||
-          d?.brand ||
-          d?.brand_name ||
-          d?.brandName ||
-          ''
+          const brand =
+            it?.brand ||
+            it?.brand_name ||
+            it?.brandName ||
+            d?.brand ||
+            d?.brand_name ||
+            d?.brandName ||
+            ''
 
-        const size = it?.size || it?.selected_size || it?.variant_size || d?.size || d?.selected_size || ''
-        const colour =
-          it?.colour ||
-          it?.color ||
-          it?.selected_color ||
-          it?.selected_colour ||
-          it?.variant_color ||
-          d?.colour ||
-          d?.color ||
-          ''
+          const size = it?.size || it?.selected_size || it?.variant_size || d?.size || d?.selected_size || ''
+          const colour =
+            it?.colour ||
+            it?.color ||
+            it?.selected_color ||
+            it?.selected_colour ||
+            it?.variant_color ||
+            d?.colour ||
+            d?.color ||
+            ''
 
-        const gender = it?.gender || d?.gender || ''
+          const gender = it?.gender || d?.gender || ''
 
-        const imageFromProduct =
-          d?.image_url ||
-          d?.image ||
-          (Array.isArray(d?.images) ? d.images[0]?.url || d.images[0] : '') ||
-          ''
+          const imageFromProduct =
+            d?.image_url ||
+            d?.image ||
+            (Array.isArray(d?.images) ? d.images[0]?.url || d.images[0] : '') ||
+            ''
 
-        const image_url = it?.image_url || imageFromProduct || ''
+          const image_url = it?.image_url || imageFromProduct || ''
 
-        const unitPrice =
-          Number(it?.price ?? d?.b2c_final_price ?? d?.final_price_b2c ?? d?.sale_price ?? d?.price ?? 0) || 0
-        const mrp = Number(it?.mrp ?? d?.b2c_actual_price ?? d?.mrp ?? unitPrice) || unitPrice
-        const qty = Number(it?.qty ?? 1) || 1
+          const unitPrice =
+            Number(it?.price ?? d?.b2c_final_price ?? d?.final_price_b2c ?? d?.sale_price ?? d?.price ?? 0) || 0
+          const mrp = Number(it?.mrp ?? d?.b2c_actual_price ?? d?.mrp ?? unitPrice) || unitPrice
+          const qty = Number(it?.qty ?? 1) || 1
 
-        return {
-          ...it,
-          product_name: name,
-          brand_name: brand,
-          size,
-          colour,
-          gender,
-          image_url,
-          unitPrice,
-          mrp,
-          qty,
-          product_id: Number(pid || 0) || pid
-        }
-      })
-    )
-    return enriched
-  }
+          return {
+            ...it,
+            product_name: name,
+            brand_name: brand,
+            size,
+            colour,
+            gender,
+            image_url,
+            unitPrice,
+            mrp,
+            qty,
+            product_id: Number(pid || 0) || pid
+          }
+        })
+      )
+      return enriched
+    },
+    [fetchProductViaEAN, fetchProductViaId]
+  )
 
-  const fetchAll = async () => {
+  const fetchAll = useCallback(async () => {
     if (!orderId) return
     setLoading(true)
     try {
@@ -172,6 +176,7 @@ export default function OrderDetails() {
           .then((r) => (r.ok ? r.json() : null))
           .catch(() => null)
         if (u && !u.message) setCustomer(u)
+        else setCustomer(null)
       } else {
         setCustomer(null)
       }
@@ -180,11 +185,11 @@ export default function OrderDetails() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [orderId, enrichItems])
 
   useEffect(() => {
     fetchAll()
-  }, [orderId])
+  }, [fetchAll])
 
   const money = (n) =>
     new Intl.NumberFormat('en-IN', {
