@@ -3,8 +3,8 @@ import { useEffect, useRef, useState } from 'react'
 import './Home1.css'
 import Navbar from './Navbar'
 import Footer from './Footer'
-import { Swiper, SwiperSlide } from 'swiper/react'
-import { Autoplay, EffectCoverflow } from 'swiper/modules'
+//import { Swiper, SwiperSlide } from 'swiper/react'
+//import { Autoplay, EffectCoverflow } from 'swiper/modules'
 
 import 'swiper/css'
 import 'swiper/css/effect-coverflow'
@@ -40,39 +40,39 @@ export default function Home1() {
     return imageMap[path] || path
   }
 
-  const scrollLeft = () => {
-    if (railRef.current) {
-      railRef.current.scrollBy({ left: -300, behavior: 'smooth' })
-    }
-  }
+  //const scrollLeft = () => {
+   // if (railRef.current) {
+    //  railRef.current.scrollBy({ left: -300, behavior: 'smooth' })
+    //}
+  //}
 
-  const scrollRight = () => {
-    if (railRef.current) {
-      railRef.current.scrollBy({ left: 300, behavior: 'smooth' })
-    }
-  }
+  //const scrollRight = () => {
+    //if (railRef.current) {
+     // railRef.current.scrollBy({ left: 300, behavior: 'smooth' })
+   // }
+  //}
 
   return (
     <div className="home1-page-new-home">
       <Navbar />
       <div className="spacer-new-home">
         <section className="home1-hero-new-home-2">
-  <div className="home1-hero-frame-new-home-2">
-    <img
-      className="home1-hero-banner-img"
-      src={getImage('/images/banners/home-banner.jpg')}
-      alt="Sri Swarnakranthi Enterprises"
-      loading="eager"
-    />
+          <div className="home1-hero-frame-new-home-2">
+            <img
+              className="home1-hero-banner-img"
+              src={getImage('/images/banners/home-banner.jpg')}
+              alt="Sri Swarnakranthi Enterprises"
+              loading="eager"
+            />
 
-    <div className="home1-hero-overlay" />
+            <div className="home1-hero-overlay" />
 
-    <div className="home1-hero-content">
-      <h1 className="home1-hero-title">Sri Swarnakranthi Enterprises</h1>
-      <p className="home1-hero-subtitle">Custom gifts and printing solutions</p>
-    </div>
-  </div>
-</section>
+            <div className="home1-hero-content">
+              <h1 className="home1-hero-title">Sri Swarnakranthi Enterprises</h1>
+              <p className="home1-hero-subtitle">Custom gifts and printing solutions</p>
+            </div>
+          </div>
+        </section>
 
 
 
@@ -592,135 +592,135 @@ export default function Home1() {
 
 
         <section className="stationary-sell-section">
-  <div className="stationary-sell-inner">
-    <div className="stationary-sell-head">
-      <h2 className="stationary-sell-title">Stationary Collection</h2>
-      <p className="stationary-sell-subtitle">Best Picks</p>
-    </div>
+          <div className="stationary-sell-inner">
+            <div className="stationary-sell-head">
+              <h2 className="stationary-sell-title">Stationary Collection</h2>
+              <p className="stationary-sell-subtitle">Best Picks</p>
+            </div>
 
-    <div className="stationary-sell-grid">
-      <div className="stationary-sell-card">
-        <div className="stationary-sell-media">
-          <img src={getImage('/images/banners/stationary/stationary1.jpg')} alt="Stationary 1" />
-        </div>
-        <div className="stationary-sell-body">
-          <p className="stationary-sell-brand">Reebook</p>
-          <p className="stationary-sell-name">Premium Stationary Item</p>
-          <div className="stationary-sell-price-row">
-            <span className="stationary-sell-mrp">₹799</span>
-            <span className="stationary-sell-offer">₹499</span>
-          </div>
-          <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+            <div className="stationary-sell-grid">
+              <div className="stationary-sell-card">
+                <div className="stationary-sell-media">
+                  <img src={getImage('/images/banners/stationary/stationary1.jpg')} alt="Stationary 1" />
+                </div>
+                <div className="stationary-sell-body">
+                  <p className="stationary-sell-brand">Reebook</p>
+                  <p className="stationary-sell-name">Premium Stationary Item</p>
+                  <div className="stationary-sell-price-row">
+                    <span className="stationary-sell-mrp">₹799</span>
+                    <span className="stationary-sell-offer">₹499</span>
+                  </div>
+                  <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="stationary-sell-card">
-        <div className="stationary-sell-media">
-          <img src={getImage('/images/banners/stationary/stationary2.jpg')} alt="Stationary 2" />
-        </div>
-        <div className="stationary-sell-body">
-          <p className="stationary-sell-brand">Reebook</p>
-          <p className="stationary-sell-name">Office Essentials</p>
-          <div className="stationary-sell-price-row">
-            <span className="stationary-sell-mrp">₹999</span>
-            <span className="stationary-sell-offer">₹699</span>
-          </div>
-          <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+              <div className="stationary-sell-card">
+                <div className="stationary-sell-media">
+                  <img src={getImage('/images/banners/stationary/stationary2.jpg')} alt="Stationary 2" />
+                </div>
+                <div className="stationary-sell-body">
+                  <p className="stationary-sell-brand">Reebook</p>
+                  <p className="stationary-sell-name">Office Essentials</p>
+                  <div className="stationary-sell-price-row">
+                    <span className="stationary-sell-mrp">₹999</span>
+                    <span className="stationary-sell-offer">₹699</span>
+                  </div>
+                  <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="stationary-sell-card">
-        <div className="stationary-sell-media">
-          <img src={getImage('/images/banners/stationary/stationary3.jpg')} alt="Stationary 3" />
-        </div>
-        <div className="stationary-sell-body">
-          <p className="stationary-sell-brand">Reebook</p>
-          <p className="stationary-sell-name">School Supplies</p>
-          <div className="stationary-sell-price-row">
-            <span className="stationary-sell-mrp">₹599</span>
-            <span className="stationary-sell-offer">₹399</span>
-          </div>
-          <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+              <div className="stationary-sell-card">
+                <div className="stationary-sell-media">
+                  <img src={getImage('/images/banners/stationary/stationary3.jpg')} alt="Stationary 3" />
+                </div>
+                <div className="stationary-sell-body">
+                  <p className="stationary-sell-brand">Reebook</p>
+                  <p className="stationary-sell-name">School Supplies</p>
+                  <div className="stationary-sell-price-row">
+                    <span className="stationary-sell-mrp">₹599</span>
+                    <span className="stationary-sell-offer">₹399</span>
+                  </div>
+                  <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="stationary-sell-card">
-        <div className="stationary-sell-media">
-          <img src={getImage('/images/banners/stationary/stationary4.jpg')} alt="Stationary 4" />
-        </div>
-        <div className="stationary-sell-body">
-          <p className="stationary-sell-brand">Reebook</p>
-          <p className="stationary-sell-name">Premium Diaries</p>
-          <div className="stationary-sell-price-row">
-            <span className="stationary-sell-mrp">₹899</span>
-            <span className="stationary-sell-offer">₹599</span>
-          </div>
-          <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+              <div className="stationary-sell-card">
+                <div className="stationary-sell-media">
+                  <img src={getImage('/images/banners/stationary/stationary4.jpg')} alt="Stationary 4" />
+                </div>
+                <div className="stationary-sell-body">
+                  <p className="stationary-sell-brand">Reebook</p>
+                  <p className="stationary-sell-name">Premium Diaries</p>
+                  <div className="stationary-sell-price-row">
+                    <span className="stationary-sell-mrp">₹899</span>
+                    <span className="stationary-sell-offer">₹599</span>
+                  </div>
+                  <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="stationary-sell-card">
-        <div className="stationary-sell-media">
-          <img src={getImage('/images/banners/stationary/stationary5.jpg')} alt="Stationary 5" />
-        </div>
-        <div className="stationary-sell-body">
-          <p className="stationary-sell-brand">Reebook</p>
-          <p className="stationary-sell-name">Trendy Pouches</p>
-          <div className="stationary-sell-price-row">
-            <span className="stationary-sell-mrp">₹699</span>
-            <span className="stationary-sell-offer">₹449</span>
-          </div>
-          <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+              <div className="stationary-sell-card">
+                <div className="stationary-sell-media">
+                  <img src={getImage('/images/banners/stationary/stationary5.jpg')} alt="Stationary 5" />
+                </div>
+                <div className="stationary-sell-body">
+                  <p className="stationary-sell-brand">Reebook</p>
+                  <p className="stationary-sell-name">Trendy Pouches</p>
+                  <div className="stationary-sell-price-row">
+                    <span className="stationary-sell-mrp">₹699</span>
+                    <span className="stationary-sell-offer">₹449</span>
+                  </div>
+                  <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="stationary-sell-card">
-        <div className="stationary-sell-media">
-          <img src={getImage('/images/banners/stationary/stationary6.jpg')} alt="Stationary 6" />
-        </div>
-        <div className="stationary-sell-body">
-          <p className="stationary-sell-brand">Reebook</p>
-          <p className="stationary-sell-name">Daily Use Covers</p>
-          <div className="stationary-sell-price-row">
-            <span className="stationary-sell-mrp">₹499</span>
-            <span className="stationary-sell-offer">₹299</span>
-          </div>
-          <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+              <div className="stationary-sell-card">
+                <div className="stationary-sell-media">
+                  <img src={getImage('/images/banners/stationary/stationary6.jpg')} alt="Stationary 6" />
+                </div>
+                <div className="stationary-sell-body">
+                  <p className="stationary-sell-brand">Reebook</p>
+                  <p className="stationary-sell-name">Daily Use Covers</p>
+                  <div className="stationary-sell-price-row">
+                    <span className="stationary-sell-mrp">₹499</span>
+                    <span className="stationary-sell-offer">₹299</span>
+                  </div>
+                  <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="stationary-sell-card">
-        <div className="stationary-sell-media">
-          <img src={getImage('/images/banners/stationary/stationary7.jpg')} alt="Stationary 7" />
-        </div>
-        <div className="stationary-sell-body">
-          <p className="stationary-sell-brand">Reebook</p>
-          <p className="stationary-sell-name">Office Organizers</p>
-          <div className="stationary-sell-price-row">
-            <span className="stationary-sell-mrp">₹1099</span>
-            <span className="stationary-sell-offer">₹799</span>
-          </div>
-          <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+              <div className="stationary-sell-card">
+                <div className="stationary-sell-media">
+                  <img src={getImage('/images/banners/stationary/stationary7.jpg')} alt="Stationary 7" />
+                </div>
+                <div className="stationary-sell-body">
+                  <p className="stationary-sell-brand">Reebook</p>
+                  <p className="stationary-sell-name">Office Organizers</p>
+                  <div className="stationary-sell-price-row">
+                    <span className="stationary-sell-mrp">₹1099</span>
+                    <span className="stationary-sell-offer">₹799</span>
+                  </div>
+                  <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="stationary-sell-card">
-        <div className="stationary-sell-media">
-          <img src={getImage('/images/banners/stationary/stationary8.jpg')} alt="Stationary 8" />
-        </div>
-        <div className="stationary-sell-body">
-          <p className="stationary-sell-brand">Reebook</p>
-          <p className="stationary-sell-name">Premium Gift Sets</p>
-          <div className="stationary-sell-price-row">
-            <span className="stationary-sell-mrp">₹1299</span>
-            <span className="stationary-sell-offer">₹899</span>
+              <div className="stationary-sell-card">
+                <div className="stationary-sell-media">
+                  <img src={getImage('/images/banners/stationary/stationary8.jpg')} alt="Stationary 8" />
+                </div>
+                <div className="stationary-sell-body">
+                  <p className="stationary-sell-brand">Reebook</p>
+                  <p className="stationary-sell-name">Premium Gift Sets</p>
+                  <div className="stationary-sell-price-row">
+                    <span className="stationary-sell-mrp">₹1299</span>
+                    <span className="stationary-sell-offer">₹899</span>
+                  </div>
+                  <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
+                </div>
+              </div>
+            </div>
           </div>
-          <Link to="/products" className="stationary-sell-btn">Buy Now</Link>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+        </section>
 
 
 
@@ -772,135 +772,135 @@ export default function Home1() {
 
 
         <section className="school-sell-section">
-  <div className="school-sell-inner">
-    <div className="school-sell-head">
-      <h2 className="school-sell-title">School Essentials</h2>
-      <p className="school-sell-subtitle">Top Picks</p>
-    </div>
+          <div className="school-sell-inner">
+            <div className="school-sell-head">
+              <h2 className="school-sell-title">School Essentials</h2>
+              <p className="school-sell-subtitle">Top Picks</p>
+            </div>
 
-    <div className="school-sell-grid">
-      <div className="school-sell-card">
-        <div className="school-sell-media">
-          <img src={getImage('/images/banners/school/school1.jpg')} alt="School Item 1" />
-        </div>
-        <div className="school-sell-body">
-          <p className="school-sell-brand">Red Tape</p>
-          <p className="school-sell-name">School Product</p>
-          <div className="school-sell-price-row">
-            <span className="school-sell-mrp">₹799</span>
-            <span className="school-sell-offer">₹499</span>
-          </div>
-          <Link to="/products" className="school-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+            <div className="school-sell-grid">
+              <div className="school-sell-card">
+                <div className="school-sell-media">
+                  <img src={getImage('/images/banners/school/school1.jpg')} alt="School Item 1" />
+                </div>
+                <div className="school-sell-body">
+                  <p className="school-sell-brand">Red Tape</p>
+                  <p className="school-sell-name">School Product</p>
+                  <div className="school-sell-price-row">
+                    <span className="school-sell-mrp">₹799</span>
+                    <span className="school-sell-offer">₹499</span>
+                  </div>
+                  <Link to="/products" className="school-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="school-sell-card">
-        <div className="school-sell-media">
-          <img src={getImage('/images/banners/school/school2.jpg')} alt="School Item 2" />
-        </div>
-        <div className="school-sell-body">
-          <p className="school-sell-brand">Red Tape</p>
-          <p className="school-sell-name">School Product</p>
-          <div className="school-sell-price-row">
-            <span className="school-sell-mrp">₹999</span>
-            <span className="school-sell-offer">₹699</span>
-          </div>
-          <Link to="/products" className="school-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+              <div className="school-sell-card">
+                <div className="school-sell-media">
+                  <img src={getImage('/images/banners/school/school2.jpg')} alt="School Item 2" />
+                </div>
+                <div className="school-sell-body">
+                  <p className="school-sell-brand">Red Tape</p>
+                  <p className="school-sell-name">School Product</p>
+                  <div className="school-sell-price-row">
+                    <span className="school-sell-mrp">₹999</span>
+                    <span className="school-sell-offer">₹699</span>
+                  </div>
+                  <Link to="/products" className="school-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="school-sell-card">
-        <div className="school-sell-media">
-          <img src={getImage('/images/banners/school/school3.jpg')} alt="School Item 3" />
-        </div>
-        <div className="school-sell-body">
-          <p className="school-sell-brand">Red Tape</p>
-          <p className="school-sell-name">School Product</p>
-          <div className="school-sell-price-row">
-            <span className="school-sell-mrp">₹599</span>
-            <span className="school-sell-offer">₹399</span>
-          </div>
-          <Link to="/products" className="school-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+              <div className="school-sell-card">
+                <div className="school-sell-media">
+                  <img src={getImage('/images/banners/school/school3.jpg')} alt="School Item 3" />
+                </div>
+                <div className="school-sell-body">
+                  <p className="school-sell-brand">Red Tape</p>
+                  <p className="school-sell-name">School Product</p>
+                  <div className="school-sell-price-row">
+                    <span className="school-sell-mrp">₹599</span>
+                    <span className="school-sell-offer">₹399</span>
+                  </div>
+                  <Link to="/products" className="school-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="school-sell-card">
-        <div className="school-sell-media">
-          <img src={getImage('/images/banners/school/school4.jpg')} alt="School Item 4" />
-        </div>
-        <div className="school-sell-body">
-          <p className="school-sell-brand">Red Tape</p>
-          <p className="school-sell-name">School Product</p>
-          <div className="school-sell-price-row">
-            <span className="school-sell-mrp">₹899</span>
-            <span className="school-sell-offer">₹599</span>
-          </div>
-          <Link to="/products" className="school-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+              <div className="school-sell-card">
+                <div className="school-sell-media">
+                  <img src={getImage('/images/banners/school/school4.jpg')} alt="School Item 4" />
+                </div>
+                <div className="school-sell-body">
+                  <p className="school-sell-brand">Red Tape</p>
+                  <p className="school-sell-name">School Product</p>
+                  <div className="school-sell-price-row">
+                    <span className="school-sell-mrp">₹899</span>
+                    <span className="school-sell-offer">₹599</span>
+                  </div>
+                  <Link to="/products" className="school-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="school-sell-card">
-        <div className="school-sell-media">
-          <img src={getImage('/images/banners/school/school5.jpg')} alt="School Item 5" />
-        </div>
-        <div className="school-sell-body">
-          <p className="school-sell-brand">Red Tape</p>
-          <p className="school-sell-name">School Product</p>
-          <div className="school-sell-price-row">
-            <span className="school-sell-mrp">₹699</span>
-            <span className="school-sell-offer">₹449</span>
-          </div>
-          <Link to="/products" className="school-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+              <div className="school-sell-card">
+                <div className="school-sell-media">
+                  <img src={getImage('/images/banners/school/school5.jpg')} alt="School Item 5" />
+                </div>
+                <div className="school-sell-body">
+                  <p className="school-sell-brand">Red Tape</p>
+                  <p className="school-sell-name">School Product</p>
+                  <div className="school-sell-price-row">
+                    <span className="school-sell-mrp">₹699</span>
+                    <span className="school-sell-offer">₹449</span>
+                  </div>
+                  <Link to="/products" className="school-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="school-sell-card">
-        <div className="school-sell-media">
-          <img src={getImage('/images/banners/school/school6.jpg')} alt="School Item 6" />
-        </div>
-        <div className="school-sell-body">
-          <p className="school-sell-brand">Red Tape</p>
-          <p className="school-sell-name">School Product</p>
-          <div className="school-sell-price-row">
-            <span className="school-sell-mrp">₹499</span>
-            <span className="school-sell-offer">₹299</span>
-          </div>
-          <Link to="/products" className="school-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+              <div className="school-sell-card">
+                <div className="school-sell-media">
+                  <img src={getImage('/images/banners/school/school6.jpg')} alt="School Item 6" />
+                </div>
+                <div className="school-sell-body">
+                  <p className="school-sell-brand">Red Tape</p>
+                  <p className="school-sell-name">School Product</p>
+                  <div className="school-sell-price-row">
+                    <span className="school-sell-mrp">₹499</span>
+                    <span className="school-sell-offer">₹299</span>
+                  </div>
+                  <Link to="/products" className="school-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="school-sell-card">
-        <div className="school-sell-media">
-          <img src={getImage('/images/banners/school/school7.jpg')} alt="School Item 7" />
-        </div>
-        <div className="school-sell-body">
-          <p className="school-sell-brand">Red Tape</p>
-          <p className="school-sell-name">School Product</p>
-          <div className="school-sell-price-row">
-            <span className="school-sell-mrp">₹1099</span>
-            <span className="school-sell-offer">₹799</span>
-          </div>
-          <Link to="/products" className="school-sell-btn">Buy Now</Link>
-        </div>
-      </div>
+              <div className="school-sell-card">
+                <div className="school-sell-media">
+                  <img src={getImage('/images/banners/school/school7.jpg')} alt="School Item 7" />
+                </div>
+                <div className="school-sell-body">
+                  <p className="school-sell-brand">Red Tape</p>
+                  <p className="school-sell-name">School Product</p>
+                  <div className="school-sell-price-row">
+                    <span className="school-sell-mrp">₹1099</span>
+                    <span className="school-sell-offer">₹799</span>
+                  </div>
+                  <Link to="/products" className="school-sell-btn">Buy Now</Link>
+                </div>
+              </div>
 
-      <div className="school-sell-card">
-        <div className="school-sell-media">
-          <img src={getImage('/images/banners/school/school8.jpg')} alt="School Item 8" />
-        </div>
-        <div className="school-sell-body">
-          <p className="school-sell-brand">Red Tape</p>
-          <p className="school-sell-name">School Product</p>
-          <div className="school-sell-price-row">
-            <span className="school-sell-mrp">₹1299</span>
-            <span className="school-sell-offer">₹899</span>
+              <div className="school-sell-card">
+                <div className="school-sell-media">
+                  <img src={getImage('/images/banners/school/school8.jpg')} alt="School Item 8" />
+                </div>
+                <div className="school-sell-body">
+                  <p className="school-sell-brand">Red Tape</p>
+                  <p className="school-sell-name">School Product</p>
+                  <div className="school-sell-price-row">
+                    <span className="school-sell-mrp">₹1299</span>
+                    <span className="school-sell-offer">₹899</span>
+                  </div>
+                  <Link to="/products" className="school-sell-btn">Buy Now</Link>
+                </div>
+              </div>
+            </div>
           </div>
-          <Link to="/products" className="school-sell-btn">Buy Now</Link>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+        </section>
 
 
 
