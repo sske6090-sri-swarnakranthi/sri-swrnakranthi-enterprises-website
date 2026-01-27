@@ -4,12 +4,12 @@ import Navbar from './Navbar'
 import Footer from './Footer'
 import { useLocation, useNavigate } from 'react-router-dom'
 
-const DEFAULT_API_BASE = 'https://taras-kart-backend.vercel.app'
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
   DEFAULT_API_BASE
-const API_BASE = API_BASE_RAW.replace(/\/+$/, '')
+const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
 const STATUS_MAP = {
   delivered: 'Delivered',
@@ -41,7 +41,7 @@ function isPrepaidOrder(order) {
 
 function firstImg(items) {
   if (!Array.isArray(items) || !items.length) return ''
-  const img = items.find((it) => it?.image_url)?.image_url || ''
+  const img = items.find(it => it?.image_url)?.image_url || ''
   return typeof img === 'string' ? img : ''
 }
 
@@ -80,7 +80,6 @@ export default function ReturnsPage({ embedded = false, user }) {
   const mobile = (user?.phone || user?.mobile || loginMobile || '').trim()
 
   const saleIdFromCancel = query.get('saleId') || ''
-  const [selectedCancelOrderId, setSelectedCancelOrderId] = useState(saleIdFromCancel || '')
 
   useEffect(() => {
     const refreshFromStorage = () => {
@@ -91,10 +90,6 @@ export default function ReturnsPage({ embedded = false, user }) {
     window.addEventListener('focus', refreshFromStorage)
     return () => window.removeEventListener('focus', refreshFromStorage)
   }, [])
-
-  useEffect(() => {
-    if (saleIdFromCancel) setSelectedCancelOrderId(saleIdFromCancel)
-  }, [saleIdFromCancel])
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -116,7 +111,7 @@ export default function ReturnsPage({ embedded = false, user }) {
         const data = await res.json()
         const list = Array.isArray(data) ? data : []
 
-        const mapped = list.map((s) => {
+        const mapped = list.map(s => {
           const img = firstImg(s.items)
           const pname = firstName(s.items)
           const itemCount = Array.isArray(s.items) ? s.items.length : 0
@@ -183,7 +178,7 @@ export default function ReturnsPage({ embedded = false, user }) {
       if (!res.ok) return
       const data = await res.json()
       const rows = Array.isArray(data.rows) ? data.rows : []
-      setReturnRequests((prev) => ({ ...prev, [saleId]: rows }))
+      setReturnRequests(prev => ({ ...prev, [saleId]: rows }))
     } catch {}
   }
 
@@ -195,11 +190,11 @@ export default function ReturnsPage({ embedded = false, user }) {
   }
 
   const cancelledPrepaidOrders = useMemo(() => {
-    return orders.filter((o) => normalizeStatus(o.status) === 'Cancelled' && isPrepaidOrder(o))
+    return orders.filter(o => normalizeStatus(o.status) === 'Cancelled' && isPrepaidOrder(o))
   }, [orders])
 
   const returnEligibleOrders = useMemo(() => {
-    return orders.filter((o) => {
+    return orders.filter(o => {
       const info = eligibility[o.id]
       return info && info.ok
     })
@@ -214,11 +209,16 @@ export default function ReturnsPage({ embedded = false, user }) {
     if (cancelledPrepaidOrders.length) seed()
   }, [cancelledPrepaidOrders])
 
+  useEffect(() => {
+    if (!saleIdFromCancel) return
+    loadReturnRequestsForSale(saleIdFromCancel)
+  }, [saleIdFromCancel])
+
   const refundApprovedBySale = useMemo(() => {
     const map = {}
     for (const saleId of Object.keys(returnRequests)) {
       const rows = returnRequests[saleId] || []
-      map[saleId] = rows.some((r) => isApprovedRefundRow(r))
+      map[saleId] = rows.some(r => isApprovedRefundRow(r))
     }
     return map
   }, [returnRequests])
@@ -262,9 +262,7 @@ export default function ReturnsPage({ embedded = false, user }) {
               <h3>Refunds for cancelled orders</h3>
               <span className="returns-count-badge">{cancelledPrepaidOrders.length}</span>
             </div>
-            <p className="returns-section-subtitle">
-              These are prepaid orders that were cancelled. If your refund is approved, you can check its status here.
-            </p>
+            <p className="returns-section-subtitle">These are prepaid orders that were cancelled. If your refund is approved, you can check its status here.</p>
 
             {cancelledPrepaidOrders.length === 0 ? (
               <div className="returns-list-empty">
@@ -272,7 +270,7 @@ export default function ReturnsPage({ embedded = false, user }) {
               </div>
             ) : (
               <div className="returns-grid">
-                {cancelledPrepaidOrders.map((order) => {
+                {cancelledPrepaidOrders.map(order => {
                   const st = normalizeStatus(order.status)
                   const approved = !!refundApprovedBySale[String(order.id)]
                   const btnText = approved ? 'Check status' : 'Get refund'
@@ -282,7 +280,6 @@ export default function ReturnsPage({ embedded = false, user }) {
                         {order.image ? <img src={order.image} alt={order.name} loading="lazy" /> : <div className="returns-ph" />}
                         <div className="returns-card-badges">
                           <span className="returns-status-pill cancelled">{st}</span>
-                          {/*<span className="returns-order-pill">#{order.id}</span> */}
                         </div>
                       </div>
 
@@ -297,11 +294,7 @@ export default function ReturnsPage({ embedded = false, user }) {
                         {order.cancellation_reason ? <div className="returns-card-note">Reason: {order.cancellation_reason}</div> : null}
 
                         <div className="returns-card-actions returns-card-actions-two">
-                          <button
-                            type="button"
-                            className="returns-primary-btn"
-                            onClick={() => navigate(`/returns/${order.id}/refund?kind=refund`)}
-                          >
+                          <button type="button" className="returns-primary-btn" onClick={() => navigate(`/returns/${order.id}/refund?kind=refund`)}>
                             {btnText}
                           </button>
                           <button type="button" className="returns-secondary-btn" onClick={() => navigate(`/order/${order.id}`)}>
@@ -336,9 +329,7 @@ export default function ReturnsPage({ embedded = false, user }) {
               <h3>Return / Replace delivered orders</h3>
               <span className="returns-count-badge">{returnEligibleOrders.length}</span>
             </div>
-            <p className="returns-section-subtitle">
-              You can raise a return or replacement request for delivered orders that are within the eligible return window.
-            </p>
+            <p className="returns-section-subtitle">You can raise a return or replacement request for delivered orders that are within the eligible return window.</p>
 
             {returnEligibleOrders.length === 0 ? (
               <div className="returns-list-empty">
@@ -346,7 +337,7 @@ export default function ReturnsPage({ embedded = false, user }) {
               </div>
             ) : (
               <div className="returns-grid">
-                {returnEligibleOrders.map((order) => {
+                {returnEligibleOrders.map(order => {
                   const st = normalizeStatus(order.status)
                   const info = eligibility[order.id]
                   const reqs = returnRequests[order.id] || []
@@ -371,17 +362,12 @@ export default function ReturnsPage({ embedded = false, user }) {
 
                         {latestRequest ? (
                           <div className="returns-card-note">
-                            Latest request: <span className="returns-highlight">{latestRequest.status || 'REQUESTED'}</span> on{' '}
-                            {formatDate(latestRequest.created_at)}
+                            Latest request: <span className="returns-highlight">{latestRequest.status || 'REQUESTED'}</span> on {formatDate(latestRequest.created_at)}
                           </div>
                         ) : null}
 
                         <div className="returns-card-actions">
-                          <button
-                            type="button"
-                            className="returns-primary-btn ghost"
-                            onClick={() => navigate(`/returns/${order.id}/refund?kind=return`)}
-                          >
+                          <button type="button" className="returns-primary-btn ghost" onClick={() => navigate(`/returns/${order.id}/refund?kind=return`)}>
                             Return / Replace
                           </button>
                           <button
@@ -407,8 +393,8 @@ export default function ReturnsPage({ embedded = false, user }) {
                               <>
                                 <div className="returns-status-title">Return history</div>
                                 <ul className="returns-status-list">
-                                  {returnRequests[order.id].map((r) => (
-                                    <li key={r.id} className={`status-${(r.status || '').toLowerCase()}`}>
+                                  {returnRequests[order.id].map(r => (
+                                    <li key={r.id} className={`status-${String(r.status || '').toLowerCase()}`}>
                                       <div className="status-main">
                                         <span className="status-pill">{r.status}</span>
                                         <span className="status-date">{formatDate(r.created_at)}</span>
