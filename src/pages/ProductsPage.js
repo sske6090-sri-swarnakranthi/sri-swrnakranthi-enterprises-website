@@ -31,10 +31,27 @@ const writeWishlistLocal = (userId, list) => {
   if (!userId) return
   try {
     localStorage.setItem(`wishlist:local:${userId}`, JSON.stringify(list || []))
-  } catch { }
+  } catch {}
 }
 
 const isWished = (list, id) => list.some((x) => String(x?.product_id ?? x?.id) === String(id))
+
+const normalizeImages = (images) => {
+  if (!images) return []
+  if (Array.isArray(images)) return images.filter(Boolean).map(String)
+  if (typeof images === 'string') {
+    const s = images.trim()
+    if (!s) return []
+    try {
+      const parsed = JSON.parse(s)
+      if (Array.isArray(parsed)) return parsed.filter(Boolean).map(String)
+      return []
+    } catch {
+      return [s]
+    }
+  }
+  return []
+}
 
 const toNum = (v) => {
   const n = parseFloat(v)
@@ -47,8 +64,8 @@ const money = (v) => {
 }
 
 const getProductName = (p) => p?.name ?? p?.product_name ?? ''
-const getFinalPrice = (p) => p?.discounted_price ?? p?.price ?? 0
-const getMrp = (p) => p?.price ?? 0
+const getFinalPrice = (p) => (p?.discounted_price ?? p?.price ?? 0)
+const getMrp = (p) => (p?.price ?? 0)
 
 const getDiscountPercent = (p) => {
   const mrp = toNum(getMrp(p))
@@ -83,8 +100,14 @@ export default function ProductsPage() {
         const res = await fetch(`${API_BASE}/api/products?limit=5000`)
         if (!res.ok) throw new Error('Failed to load products')
         const data = await res.json()
+
         if (!alive) return
-        setItems(Array.isArray(data) ? data : [])
+        const list = Array.isArray(data) ? data : []
+        const normalized = list.map((p) => ({
+          ...p,
+          images: normalizeImages(p?.images)
+        }))
+        setItems(normalized)
       } catch (e) {
         if (!alive) return
         setError(e?.message || 'Failed to load products')
@@ -134,7 +157,7 @@ export default function ProductsPage() {
     if (!userId) {
       try {
         window.dispatchEvent(new CustomEvent('open-login'))
-      } catch { }
+      } catch {}
       return
     }
 
@@ -160,14 +183,16 @@ export default function ProductsPage() {
         if (!resp.ok) throw new Error(data?.message || 'Unable to remove wishlist')
       }
 
+      const imgs = normalizeImages(p.images)
+
       const payload = {
         id: p.id,
         product_id: p.id,
         name: p.name,
         brand: p.brand,
         category_slug: p.category_slug,
-        images: p.images,
-        image_url: Array.isArray(p.images) && p.images.length ? p.images[0] : '',
+        images: imgs,
+        image_url: imgs.length ? imgs[0] : '',
         price: p.price,
         discounted_price: p.discounted_price
       }
@@ -181,9 +206,8 @@ export default function ProductsPage() {
 
       try {
         window.dispatchEvent(new CustomEvent('wishlist-local-updated', { detail: next }))
-      } catch { }
-    } catch {
-    } finally {
+      } catch {}
+    } catch {} finally {
       setBusyId('')
     }
   }
@@ -221,7 +245,8 @@ export default function ProductsPage() {
         {!loading && !error && filtered.length > 0 && (
           <div className="pp-grid">
             {filtered.map((p) => {
-              const img = Array.isArray(p.images) && p.images.length ? p.images[0] : ''
+              const imgs = normalizeImages(p.images)
+              const img = imgs.length ? imgs[0] : ''
               const price = getFinalPrice(p)
               const mrp = getMrp(p)
               const discount = getDiscountPercent(p)
