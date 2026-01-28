@@ -352,19 +352,23 @@ const NavbarFinal = () => {
           />
 
           <div className="icon-buttons-final">
-            <Link to="/profile" onClick={handleNavClick} className={`icon-btn ${isActive('/profile') ? 'icon-active-btn' : ''}`}>
+            <Link
+              to="/profile"
+              onClick={handleNavClick}
+              className={`icon-btn ${isActive('/profile') ? 'icon-active-btn' : ''}`}
+            >
               <div className="icon-circle">
-                {isActive('/profile') ? (
-                  <FaUser className="icon icon-filled" />
-                ) : (
-                  <FaRegUser className="icon icon-outline" />
-                )}
+                {isActive('/profile') ? <FaUser className="icon icon-filled" /> : <FaRegUser className="icon icon-outline" />}
                 <span className="inner-ring" />
               </div>
               <span className={`icon-label ${isActive('/profile') ? 'label-active' : ''}`}>Profile</span>
             </Link>
 
-            <Link to="/wishlist" onClick={handleNavClick} className={`icon-btn ${isActive('/wishlist') ? 'icon-active-btn' : ''}`}>
+            <Link
+              to="/wishlist"
+              onClick={handleNavClick}
+              className={`icon-btn ${isActive('/wishlist') ? 'icon-active-btn' : ''}`}
+            >
               <div className="icon-circle">
                 {isActive('/wishlist') ? (
                   <FaHeart className="icon icon-filled" />
@@ -400,7 +404,11 @@ const NavbarFinal = () => {
             </div>
           </Link>
 
-          <Link to="/wishlist" onClick={handleNavClick} className={`icon-btn ${isActive('/wishlist') ? 'icon-active-btn' : ''}`}>
+          <Link
+            to="/wishlist"
+            onClick={handleNavClick}
+            className={`icon-btn ${isActive('/wishlist') ? 'icon-active-btn' : ''}`}
+          >
             <div className="icon-circle">
               {isActive('/wishlist') ? <FaHeart className="icon icon-filled" /> : <FaRegHeart className="icon icon-outline" />}
               {wishlistItems.length > 0 && <span className="red-dot1" />}
@@ -410,7 +418,11 @@ const NavbarFinal = () => {
 
           <Link to="/cart" onClick={handleNavClick} className={`icon-btn ${isActive('/cart') ? 'icon-active-btn' : ''}`}>
             <div className="icon-circle">
-              {isActive('/cart') ? <FaShoppingBag className="icon icon-filled" /> : <FiShoppingBag className="icon icon-outline-stroke" />}
+              {isActive('/cart') ? (
+                <FaShoppingBag className="icon icon-filled" />
+              ) : (
+                <FiShoppingBag className="icon icon-outline-stroke" />
+              )}
               {cartItems.length > 0 && <span className="red-dot1" />}
               <span className="inner-ring" />
             </div>
