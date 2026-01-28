@@ -82,6 +82,7 @@ export default function ProductsPage() {
   const userId = useMemo(() => getUserId(), [])
   const [wishlistLocal, setWishlistLocal] = useState(() => readWishlistLocal(getUserId()))
   const [busyId, setBusyId] = useState('')
+  const [activeImgIdx, setActiveImgIdx] = useState({})
 
   const [filters, setFilters] = useState({
     q: '',
@@ -128,6 +129,20 @@ export default function ProductsPage() {
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
   }, [])
+
+  useEffect(() => {
+    setActiveImgIdx((prev) => {
+      const next = { ...prev }
+      for (const p of items || []) {
+        const key = String(p?.id ?? '')
+        if (!key) continue
+        const imgs = normalizeImages(p?.images)
+        const cur = Number.isFinite(prev[key]) ? prev[key] : 0
+        next[key] = imgs.length ? Math.min(cur, imgs.length - 1) : 0
+      }
+      return next
+    })
+  }, [items])
 
   const filtered = useMemo(() => {
     const q = String(filters?.q || '').trim().toLowerCase()
@@ -212,6 +227,11 @@ export default function ProductsPage() {
     }
   }
 
+  const setActiveFor = (productId, idx) => {
+    const key = String(productId)
+    setActiveImgIdx((prev) => ({ ...prev, [key]: idx }))
+  }
+
   return (
     <div className="pp-page">
       <div className="pp-nav">
@@ -246,7 +266,9 @@ export default function ProductsPage() {
           <div className="pp-grid">
             {filtered.map((p) => {
               const imgs = normalizeImages(p.images)
-              const img = imgs.length ? imgs[0] : ''
+              const key = String(p.id)
+              const idx = Number.isFinite(activeImgIdx[key]) ? activeImgIdx[key] : 0
+              const active = imgs.length ? imgs[Math.max(0, Math.min(idx, imgs.length - 1))] : ''
               const price = getFinalPrice(p)
               const mrp = getMrp(p)
               const discount = getDiscountPercent(p)
@@ -257,8 +279,8 @@ export default function ProductsPage() {
               return (
                 <div key={p.id} className="pp-card">
                   <div className="pp-media">
-                    {img ? (
-                      <img src={img} alt={name} className="pp-img" />
+                    {active ? (
+                      <img src={active} alt={name} className="pp-img" />
                     ) : (
                       <div className="pp-img ph">No Image</div>
                     )}
@@ -274,6 +296,22 @@ export default function ProductsPage() {
                     </button>
 
                     {toNum(discount) > 0 && <div className="pp-badge">{toNum(discount)}% OFF</div>}
+
+                    {imgs.length > 1 && (
+                      <div className="pp-thumbs">
+                        {imgs.map((u, i) => (
+                          <button
+                            type="button"
+                            key={`${p.id}-${i}`}
+                            className={`pp-thumb ${i === idx ? 'active' : ''}`}
+                            onClick={() => setActiveFor(p.id, i)}
+                            aria-label={`image-${i + 1}`}
+                          >
+                            <img src={u} alt={`${name}-${i + 1}`} />
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="pp-body">
