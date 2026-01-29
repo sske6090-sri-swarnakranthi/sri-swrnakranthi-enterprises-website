@@ -4,7 +4,7 @@ import Navbar from './Navbar';
 import Footer from './Footer';
 import './PaymentPage.css';
 
-const DEFAULT_API_BASE = 'https://taras-kart-backend.vercel.app';
+const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app';
 const API_BASE_RAW =
   (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
   (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||

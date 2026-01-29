@@ -88,14 +88,28 @@ const explodeProductsByImages = (list) => {
   return out
 }
 
-const wishKey = (productId, imageUrl) => `${String(productId)}::${String(imageUrl || '')}`
+const wishKey = (productId, variant) => `${String(productId)}::${String(variant || '')}`
+
+const normalizeWishlistRow = (row) => {
+  const rawImages = Array.isArray(row?.images) ? row.images.filter(Boolean).map(String) : []
+  const variant = String(row?.variant || row?.image_url || '')
+  const image_url = variant || (rawImages.length ? rawImages[0] : '')
+  return {
+    ...row,
+    id: row?.product_id || row?.id,
+    product_id: row?.product_id || row?.id,
+    variant,
+    image_url,
+    images: image_url ? [image_url] : rawImages
+  }
+}
 
 export default function ProductsPage() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const userId = useMemo(() => getUserId(), [])
-  const [wishlistLocal, setWishlistLocal] = useState(() => readWishlistLocal(getUserId()))
+  const [wishlistLocal, setWishlistLocal] = useState(() => readWishlistLocal(getUserId()).map(normalizeWishlistRow))
   const [busyKey, setBusyKey] = useState('')
 
   const [filters, setFilters] = useState({
@@ -116,7 +130,6 @@ export default function ProductsPage() {
         if (!res.ok) throw new Error('Failed to load products')
         const data = await res.json()
         if (!alive) return
-
         const list = Array.isArray(data) ? data : []
         const normalized = list.map((p) => ({ ...p, images: normalizeImages(p?.images) }))
         setItems(normalized)
@@ -136,9 +149,21 @@ export default function ProductsPage() {
   }, [])
 
   useEffect(() => {
-    const onStorage = () => setWishlistLocal(readWishlistLocal(getUserId()))
+    const onStorage = () => {
+      const next = readWishlistLocal(getUserId()).map(normalizeWishlistRow)
+      setWishlistLocal(next)
+    }
     window.addEventListener('storage', onStorage)
     return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
+  useEffect(() => {
+    const handler = (e) => {
+      const next = Array.isArray(e?.detail) ? e.detail : readWishlistLocal(getUserId())
+      setWishlistLocal((Array.isArray(next) ? next : []).map(normalizeWishlistRow))
+    }
+    window.addEventListener('wishlist-local-updated', handler)
+    return () => window.removeEventListener('wishlist-local-updated', handler)
   }, [])
 
   const exploded = useMemo(() => explodeProductsByImages(items), [items])
@@ -167,12 +192,12 @@ export default function ProductsPage() {
     })
   }, [exploded, filters])
 
-  const isWishedCard = (productId, imageUrl) => {
-    const key = wishKey(productId, imageUrl)
+  const isWishedCard = (productId, variant) => {
+    const key = wishKey(productId, variant)
     return (wishlistLocal || []).some((x) => {
       const pid = x?.product_id ?? x?.id
-      const img = x?.image_url ?? (Array.isArray(x?.images) ? x.images[0] : '') ?? ''
-      return wishKey(pid, img) === key
+      const v = String(x?.variant || x?.image_url || (Array.isArray(x?.images) ? x.images[0] : '') || '')
+      return wishKey(pid, v) === key
     })
   }
 
@@ -185,9 +210,9 @@ export default function ProductsPage() {
     }
 
     const pid = p.id
-    const img = String(p.__image || '')
-    const key = wishKey(pid, img)
-    const wished = isWishedCard(pid, img)
+    const variant = String(p.__image || '')
+    const key = wishKey(pid, variant)
+    const wished = isWishedCard(pid, variant)
 
     setBusyKey(key)
 
@@ -196,46 +221,51 @@ export default function ProductsPage() {
         const resp = await fetch(`${API_BASE}/api/wishlist`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId, product_id: pid, image_url: img })
+          body: JSON.stringify({ user_id: userId, product_id: pid, variant })
         })
         const data = await resp.json().catch(() => ({}))
         if (!resp.ok) throw new Error(data?.message || 'Unable to add wishlist')
+
+        const payload = normalizeWishlistRow({
+          id: pid,
+          product_id: pid,
+          name: p.name,
+          brand: p.brand,
+          category_slug: p.category_slug,
+          variant,
+          image_url: variant,
+          images: Array.isArray(p.images) ? p.images : variant ? [variant] : [],
+          price: p.price,
+          discounted_price: p.discounted_price
+        })
+
+        const next = [...(wishlistLocal || []), payload]
+        writeWishlistLocal(userId, next)
+        setWishlistLocal(next)
+        try {
+          window.dispatchEvent(new CustomEvent('wishlist-local-updated', { detail: next }))
+        } catch {}
       } else {
         const resp = await fetch(`${API_BASE}/api/wishlist`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ user_id: userId, product_id: pid, image_url: img })
+          body: JSON.stringify({ user_id: userId, product_id: pid, variant })
         })
         const data = await resp.json().catch(() => ({}))
-        if (!resp.ok) throw new Error(data?.message || 'Unable to remove wishlist')
+        if (!resp.ok && resp.status !== 404) throw new Error(data?.message || 'Unable to remove wishlist')
+
+        const next = (wishlistLocal || []).filter((x) => {
+          const xpid = x?.product_id ?? x?.id
+          const xv = String(x?.variant || x?.image_url || (Array.isArray(x?.images) ? x.images[0] : '') || '')
+          return wishKey(xpid, xv) !== key
+        })
+
+        writeWishlistLocal(userId, next)
+        setWishlistLocal(next)
+        try {
+          window.dispatchEvent(new CustomEvent('wishlist-local-updated', { detail: next }))
+        } catch {}
       }
-
-      const payload = {
-        id: pid,
-        product_id: pid,
-        name: p.name,
-        brand: p.brand,
-        category_slug: p.category_slug,
-        image_url: img,
-        images: img ? [img] : [],
-        price: p.price,
-        discounted_price: p.discounted_price
-      }
-
-      const next = wished
-        ? (wishlistLocal || []).filter((x) => {
-            const xpid = x?.product_id ?? x?.id
-            const ximg = x?.image_url ?? (Array.isArray(x?.images) ? x.images[0] : '') ?? ''
-            return wishKey(xpid, ximg) !== key
-          })
-        : [...(wishlistLocal || []), payload]
-
-      writeWishlistLocal(userId, next)
-      setWishlistLocal(next)
-
-      try {
-        window.dispatchEvent(new CustomEvent('wishlist-local-updated', { detail: next }))
-      } catch {}
     } catch {} finally {
       setBusyKey('')
     }
@@ -311,9 +341,9 @@ export default function ProductsPage() {
                       {toNum(discount) > 0 && <span className="pp-mrp">₹{money(mrp)}</span>}
                     </div>
 
-                    <button className="pp-btn" type="button">
+                    {/*<button className="pp-btn" type="button">
                       View Details
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               )

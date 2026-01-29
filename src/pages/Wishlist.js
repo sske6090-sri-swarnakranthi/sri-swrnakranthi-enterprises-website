@@ -42,7 +42,9 @@ const toNum = (v) => {
   return Number.isFinite(n) ? n : 0
 }
 
-const itemKey = (x) => `${String(x?.product_id ?? x?.id ?? '')}::${String(x?.image_url ?? (Array.isArray(x?.images) ? x.images[0] : '') ?? '')}`
+const getVariant = (x) => String(x?.variant || x?.image_url || '')
+
+const itemKey = (x) => `${String(x?.product_id ?? x?.id ?? '')}::${getVariant(x)}`
 
 const buildSig = (arr) => {
   if (!Array.isArray(arr)) return ''
@@ -81,8 +83,9 @@ const Wishlist = () => {
   }, [])
 
   const normalizeWishlistItem = useCallback((row) => {
-    const images = Array.isArray(row?.images) ? row.images.filter(Boolean).map(String) : []
-    const image_url = String(row?.image_url || (images.length ? images[0] : '/images/placeholder.jpg'))
+    const rawImages = Array.isArray(row?.images) ? row.images.filter(Boolean).map(String) : []
+    const variant = String(row?.variant || row?.image_url || '')
+    const finalImg = variant || (rawImages.length ? rawImages[0] : '/images/placeholder.jpg')
     const name = row?.name ?? row?.product_name ?? ''
     return {
       ...row,
@@ -90,8 +93,9 @@ const Wishlist = () => {
       product_id: row?.product_id || row?.id,
       name,
       product_name: name,
-      image_url,
-      images: image_url ? [image_url] : images
+      variant,
+      image_url: finalImg,
+      images: rawImages
     }
   }, [])
 
@@ -154,17 +158,20 @@ const Wishlist = () => {
     }
 
     const pid = selectedItem.product_id || selectedItem.id
-    const img = String(selectedItem.image_url || (Array.isArray(selectedItem.images) ? selectedItem.images[0] : '') || '')
+    const variant = String(selectedItem.variant || selectedItem.image_url || '')
 
     try {
-      await fetch(`${API_BASE}/api/wishlist`, {
+      const resp = await fetch(`${API_BASE}/api/wishlist`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, product_id: pid, image_url: img })
+        body: JSON.stringify({ user_id: userId, product_id: pid, variant })
       })
 
-      const removeKey = `${String(pid)}::${img}`
-      const updated = wishlistItems.filter((it) => itemKey(it) !== removeKey)
+      const data = await resp.json().catch(() => ({}))
+      if (!resp.ok && resp.status !== 404) throw new Error(data?.message || 'Unable to remove wishlist')
+
+      const removeKey = `${String(pid)}::${variant}`
+      const updated = (wishlistItems || []).filter((it) => itemKey(it) !== removeKey)
       safeSetWishlist(updated)
       writeWishlistLocal(userId, updated)
 
@@ -225,6 +232,7 @@ const Wishlist = () => {
               const { mrp, offer } = getItemPricing(item)
               const discountPct = mrp > 0 && offer < mrp ? Math.round(((mrp - offer) / mrp) * 100) : 0
               const displayName = item?.name ?? item?.product_name ?? ''
+              const img = String(item?.variant || item?.image_url || (Array.isArray(item?.images) ? item.images[0] : '') || '')
               const key = itemKey(item) || String(index)
 
               return (
@@ -232,18 +240,18 @@ const Wishlist = () => {
                   <div
                     className="wishlist-media"
                     onClick={() => {
-                      sessionStorage.setItem('selectedProduct', JSON.stringify(item))
+                      sessionStorage.setItem('selectedProduct', JSON.stringify({ ...item, image_url: img, variant: String(item?.variant || img) }))
                       navigate('/checkout')
                     }}
                   >
-                    <img src={item.image_url} alt={displayName} loading="lazy" decoding="async" />
+                    <img src={img} alt={displayName} loading="lazy" decoding="async" />
 
                     <button
                       type="button"
                       className="wishlist-remove"
                       onClick={(e) => {
                         e.stopPropagation()
-                        handleRemove(item)
+                        handleRemove({ ...item, image_url: img, variant: String(item?.variant || img) })
                       }}
                       aria-label="Remove"
                     >
@@ -268,7 +276,7 @@ const Wishlist = () => {
                       className="wishlist-move-btn"
                       onClick={(e) => {
                         e.stopPropagation()
-                        sessionStorage.setItem('selectedProduct', JSON.stringify(item))
+                        sessionStorage.setItem('selectedProduct', JSON.stringify({ ...item, image_url: img, variant: String(item?.variant || img) }))
                         navigate('/checkout')
                       }}
                     >
