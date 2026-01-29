@@ -42,13 +42,11 @@ const toNum = (v) => {
   return Number.isFinite(n) ? n : 0
 }
 
+const itemKey = (x) => `${String(x?.product_id ?? x?.id ?? '')}::${String(x?.image_url ?? (Array.isArray(x?.images) ? x.images[0] : '') ?? '')}`
+
 const buildSig = (arr) => {
   if (!Array.isArray(arr)) return ''
-  return arr
-    .map((x) => String(x?.product_id ?? x?.id ?? ''))
-    .filter(Boolean)
-    .sort()
-    .join('|')
+  return arr.map(itemKey).filter(Boolean).sort().join('|')
 }
 
 const Wishlist = () => {
@@ -83,8 +81,8 @@ const Wishlist = () => {
   }, [])
 
   const normalizeWishlistItem = useCallback((row) => {
-    const images = Array.isArray(row?.images) ? row.images : []
-    const image_url = row?.image_url || (images.length ? images[0] : '/images/placeholder.jpg')
+    const images = Array.isArray(row?.images) ? row.images.filter(Boolean).map(String) : []
+    const image_url = String(row?.image_url || (images.length ? images[0] : '/images/placeholder.jpg'))
     const name = row?.name ?? row?.product_name ?? ''
     return {
       ...row,
@@ -93,7 +91,7 @@ const Wishlist = () => {
       name,
       product_name: name,
       image_url,
-      images
+      images: image_url ? [image_url] : images
     }
   }, [])
 
@@ -156,15 +154,17 @@ const Wishlist = () => {
     }
 
     const pid = selectedItem.product_id || selectedItem.id
+    const img = String(selectedItem.image_url || (Array.isArray(selectedItem.images) ? selectedItem.images[0] : '') || '')
 
     try {
       await fetch(`${API_BASE}/api/wishlist`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: userId, product_id: pid })
+        body: JSON.stringify({ user_id: userId, product_id: pid, image_url: img })
       })
 
-      const updated = wishlistItems.filter((it) => String(it.product_id || it.id) !== String(pid))
+      const removeKey = `${String(pid)}::${img}`
+      const updated = wishlistItems.filter((it) => itemKey(it) !== removeKey)
       safeSetWishlist(updated)
       writeWishlistLocal(userId, updated)
 
@@ -225,7 +225,7 @@ const Wishlist = () => {
               const { mrp, offer } = getItemPricing(item)
               const discountPct = mrp > 0 && offer < mrp ? Math.round(((mrp - offer) / mrp) * 100) : 0
               const displayName = item?.name ?? item?.product_name ?? ''
-              const key = String(item.product_id ?? item.id ?? index)
+              const key = itemKey(item) || String(index)
 
               return (
                 <div key={key} className="wishlist-card">

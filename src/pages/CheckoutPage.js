@@ -6,46 +6,12 @@ import { useCart } from '../CartContext'
 import { useWishlist } from '../WishlistContext'
 import { FaHeart, FaShoppingBag } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
-import { initializeApp, getApps } from 'firebase/app'
-import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import { auth } from '../firebase'
+import { onAuthStateChanged } from 'firebase/auth'
 
 const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
-const API_BASE_RAW =
-  (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ||
-  (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) ||
-  DEFAULT_API_BASE
+const API_BASE_RAW = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) || DEFAULT_API_BASE
 const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
-
-const env =
-  typeof import.meta !== 'undefined' && import.meta.env
-    ? import.meta.env
-    : typeof process !== 'undefined' && process.env
-      ? process.env
-      : {}
-
-const fallbackFirebase = {
-  apiKey: 'AIzaSyCXytrftmbkF6IHsgpByDcpB4oUSwdJV0M',
-  authDomain: 'taraskart-6e601.firebaseapp.com',
-  projectId: 'taraskart-6e601',
-  storageBucket: 'taraskart-6e601.appspot.com',
-  messagingSenderId: '549582561307',
-  appId: '1:549582561307:web:40827cc8fc2b1696b718be'
-}
-
-const firebaseConfig = {
-  apiKey: env.VITE_FIREBASE_API_KEY || env.REACT_APP_FIREBASE_API_KEY || fallbackFirebase.apiKey,
-  authDomain: env.VITE_FIREBASE_AUTH_DOMAIN || env.REACT_APP_FIREBASE_AUTH_DOMAIN || fallbackFirebase.authDomain,
-  projectId: env.VITE_FIREBASE_PROJECT_ID || env.REACT_APP_FIREBASE_PROJECT_ID || fallbackFirebase.projectId,
-  storageBucket: env.VITE_FIREBASE_STORAGE_BUCKET || env.REACT_APP_FIREBASE_STORAGE_BUCKET || fallbackFirebase.storageBucket,
-  messagingSenderId:
-    env.VITE_FIREBASE_MESSAGING_SENDER_ID ||
-    env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID ||
-    fallbackFirebase.messagingSenderId,
-  appId: env.VITE_FIREBASE_APP_ID || env.REACT_APP_FIREBASE_APP_ID || fallbackFirebase.appId
-}
-
-if (!getApps().length) initializeApp(firebaseConfig)
-const auth = getAuth()
 
 const isIntId = (v) => {
   const n = Number(v)

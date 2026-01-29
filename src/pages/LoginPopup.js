@@ -1,9 +1,11 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { FaGoogle } from 'react-icons/fa'
 import { FiX, FiMail, FiLock, FiEye, FiEyeOff } from 'react-icons/fi'
 import './LoginPopup.css'
 import ForgotPasswordPopup from './ForgotPasswordPopup'
 import SignupPopup from './SignupPopup'
+import { auth, googleProvider } from '../firebase'
+import { signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth'
 
 const DEFAULT_API_BASE = 'https://sri-swarnakranthi-enterprises-backe.vercel.app'
 const API_BASE_RAW =
@@ -12,25 +14,7 @@ const API_BASE_RAW =
   DEFAULT_API_BASE
 const API_BASE = String(API_BASE_RAW || DEFAULT_API_BASE).replace(/\/+$/, '')
 
-function persistSession(payload = {}) {
-  const token = payload?.token || payload?.userToken || ''
-  const user = payload?.user && typeof payload.user === 'object' ? payload.user : payload
-
-  const id = user?.id || user?.userId || user?.customerId || ''
-  const email = user?.email || ''
-  const name = user?.name || ''
-  const type = user?.type || user?.user_type || user?.userType || 'B2C'
-
-  if (id) sessionStorage.setItem('userId', String(id))
-  if (email) sessionStorage.setItem('userEmail', String(email))
-  if (name) sessionStorage.setItem('userName', String(name))
-  if (type) sessionStorage.setItem('userType', String(type))
-  if (token) sessionStorage.setItem('userToken', String(token))
-
-  return { id, email, name, userType: type, token }
-}
-
-export default function LoginPopup({ onClose, onSuccess }) {
+const LoginPopup = ({ onClose, onSuccess }) => {
   const popupRef = useRef(null)
   const emailRef = useRef(null)
   const passwordRef = useRef(null)
@@ -45,59 +29,168 @@ export default function LoginPopup({ onClose, onSuccess }) {
   const [showSignup, setShowSignup] = useState(false)
 
   const validEmail = useCallback((v) => /^\S+@\S+\.\S+$/.test(v), [])
+  const canSubmit = validEmail(email) && !!password && !loading
 
   const setMsg = useCallback((m) => {
-    setPopupMessage(m)
     if (msgTimerRef.current) clearTimeout(msgTimerRef.current)
+    setPopupMessage(m)
     msgTimerRef.current = setTimeout(() => setPopupMessage(''), 2200)
   }, [])
 
-  const handleLogin = useCallback(async () => {
-    const emailOk = validEmail(email)
-    const canSubmitNow = emailOk && !!password && !loading
-    if (!canSubmitNow) return
+  const clearUserIdIfInvalid = useCallback(() => {
+    const sid = sessionStorage.getItem('userId')
+    const lid = localStorage.getItem('userId')
+    if (sid && !Number.isInteger(Number(sid))) sessionStorage.removeItem('userId')
+    if (lid && !Number.isInteger(Number(lid))) localStorage.removeItem('userId')
+  }, [])
 
+  const persistUser = useCallback(
+    (user) => {
+      const u = user || {}
+      const id = u?.id || u?.userId || u?.customerId || u?.uid || ''
+      const em = u?.email || ''
+      const nm = u?.name || u?.displayName || (em ? em.split('@')[0] : '') || 'User'
+      const tp = u?.type || u?.userType || 'B2C'
+      const pic = u?.photoURL || u?.profilePic || '/images/profile-pic.png'
+
+      if (id) {
+        localStorage.setItem('userId', String(id))
+        sessionStorage.setItem('userId', String(id))
+      }
+      if (em) {
+        localStorage.setItem('userEmail', String(em))
+        sessionStorage.setItem('userEmail', String(em))
+      }
+      if (nm) {
+        localStorage.setItem('userName', String(nm))
+        sessionStorage.setItem('userName', String(nm))
+      }
+      if (tp) {
+        localStorage.setItem('userType', String(tp))
+        sessionStorage.setItem('userType', String(tp))
+      }
+      localStorage.setItem('userProfilePic', String(pic))
+      sessionStorage.setItem('userProfilePic', String(pic))
+
+      clearUserIdIfInvalid()
+      return { id, name: nm, email: em, profilePic: pic, userType: tp }
+    },
+    [clearUserIdIfInvalid]
+  )
+
+  const syncUserWithBackend = useCallback(
+    async (firebaseUser, idToken) => {
+      const resp = await fetch(`${API_BASE}/api/user/firebase-sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({
+          name: firebaseUser?.displayName || '',
+          email: firebaseUser?.email || '',
+          mobile: sessionStorage.getItem('userMobile') || '',
+          type: sessionStorage.getItem('userType') || 'B2C'
+        })
+      })
+      const data = await resp.json().catch(() => ({}))
+      if (!resp.ok) throw new Error(data?.message || 'Login failed')
+      return data?.user || data
+    },
+    []
+  )
+
+  const fetchMe = useCallback(async (idToken) => {
+    const resp = await fetch(`${API_BASE}/api/user/me`, {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${idToken}` }
+    })
+    const data = await resp.json().catch(() => ({}))
+    if (!resp.ok) throw new Error(data?.message || 'Login failed')
+    return data?.user || data
+  }, [])
+
+  const handleLogin = useCallback(async () => {
+    if (!canSubmit) return
     setLoading(true)
     try {
-      const resp = await fetch(`${API_BASE}/api/user/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password })
-      })
+      const cred = await signInWithEmailAndPassword(auth, email.trim(), password)
+      const u = cred.user
+      const idToken = await u.getIdToken()
 
-      const data = await resp.json().catch(() => ({}))
+      localStorage.setItem('tk_id_token', idToken)
+      sessionStorage.setItem('tk_id_token', idToken)
 
-      if (!resp.ok) {
-        setMsg(data?.message || 'Invalid email or password')
-        return
+      let me = null
+      try {
+        me = await fetchMe(idToken)
+      } catch {
+        me = await syncUserWithBackend(u, idToken)
       }
 
-      const persisted = persistSession(data)
       setPopupMessage('Successfully Logged In!')
+      const shaped = persistUser({ ...me, email: me?.email || u.email, name: me?.name || u.displayName, uid: u.uid })
       setTimeout(() => {
-        onSuccess && onSuccess(persisted)
+        onSuccess && onSuccess(shaped)
         setPopupMessage('')
       }, 900)
-    } catch {
-      setMsg('Server error')
+    } catch (e) {
+      const code = String(e?.code || '').toLowerCase()
+      if (code.includes('too-many-requests')) setMsg('Too many attempts, try later')
+      else if (code.includes('user-disabled')) setMsg('Account disabled')
+      else if (code.includes('network-request-failed')) setMsg('Network error')
+      else if (code.includes('invalid-api-key')) setMsg('Invalid Firebase API key')
+      else setMsg(e?.message || 'Invalid email or password')
     } finally {
       setLoading(false)
     }
-  }, [email, password, loading, validEmail, setMsg, onSuccess])
+  }, [canSubmit, email, password, fetchMe, persistUser, setMsg, onSuccess, syncUserWithBackend])
 
   const handleLoginRef = useRef(handleLogin)
   useEffect(() => {
     handleLoginRef.current = handleLogin
   }, [handleLogin])
 
-  const loginWithGoogle = useCallback(() => {
-    setMsg('Google login will be added later')
-  }, [setMsg])
+  const loginWithGoogle = useCallback(async () => {
+    if (loading) return
+    setLoading(true)
+    try {
+      const cred = await signInWithPopup(auth, googleProvider)
+      const u = cred.user
+      const idToken = await u.getIdToken()
+
+      localStorage.setItem('tk_id_token', idToken)
+      sessionStorage.setItem('tk_id_token', idToken)
+
+      let me = null
+      try {
+        me = await syncUserWithBackend(u, idToken)
+      } catch {
+        me = await fetchMe(idToken)
+      }
+
+      setPopupMessage('Successfully Logged In!')
+      const shaped = persistUser({ ...me, email: me?.email || u.email, name: me?.name || u.displayName, uid: u.uid, photoURL: u.photoURL })
+      setTimeout(() => {
+        onSuccess && onSuccess(shaped)
+        setPopupMessage('')
+      }, 900)
+    } catch (e) {
+      const raw = String(e?.message || '')
+      const code = String(e?.code || '').toLowerCase()
+      const lower = raw.toLowerCase()
+      const isSuspended = lower.includes('consumer') && lower.includes('suspended')
+
+      if (isSuspended) setMsg('Firebase API key suspended. Use Sri-Swarnakranthi Firebase config.')
+      else if (code.includes('popup-closed-by-user')) setMsg('Popup closed')
+      else if (code.includes('unauthorized-domain')) setMsg('Domain not authorized in Firebase')
+      else if (code.includes('invalid-api-key')) setMsg('Invalid Firebase API key')
+      else setMsg('Google sign-in failed')
+    } finally {
+      setLoading(false)
+    }
+  }, [loading, fetchMe, persistUser, setMsg, onSuccess, syncUserWithBackend])
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     emailRef.current?.focus()
-
     return () => {
       document.body.style.overflow = ''
       if (msgTimerRef.current) clearTimeout(msgTimerRef.current)
@@ -139,13 +232,11 @@ export default function LoginPopup({ onClose, onSuccess }) {
     }
   }
 
-  const canSubmit = validEmail(email) && password && !loading
-
   return (
     <>
       <div className="popup-overlay-login">
         <div className="form-container-login" ref={popupRef} role="dialog" aria-modal="true">
-          <button className="close-login" onClick={() => onClose && onClose()} aria-label="Close">
+          <button className="close-login" onClick={onClose} aria-label="Close">
             <FiX />
           </button>
 
@@ -219,7 +310,7 @@ export default function LoginPopup({ onClose, onSuccess }) {
           </div>
 
           <div className="social-grid-login">
-            <button className="btn-google-login" onClick={loginWithGoogle} type="button">
+            <button className="btn-google-login" onClick={loginWithGoogle} type="button" disabled={loading}>
               <FaGoogle /> Google
             </button>
           </div>
@@ -238,3 +329,5 @@ export default function LoginPopup({ onClose, onSuccess }) {
     </>
   )
 }
+
+export default LoginPopup
