@@ -348,3 +348,14 @@
     border-radius: 11px;
   }
 }
+
+.pp-media-fixed {
+  height: 260px;
+  aspect-ratio: auto;
+}
+
+@media (max-width: 560px) {
+  .pp-media-fixed {
+    height: 200px;
+  }
+}
