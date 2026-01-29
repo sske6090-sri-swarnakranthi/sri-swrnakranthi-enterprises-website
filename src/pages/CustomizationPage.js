@@ -427,7 +427,15 @@ export default function CustomizationPage() {
 
       ctx.restore();
 
-      drawStateRef.current.overlayMeta = { cx: centerX, cy: centerY, w, h, rotate: settings.rotate, flipX: settings.flipX, flipY: settings.flipY };
+      drawStateRef.current.overlayMeta = {
+        cx: centerX,
+        cy: centerY,
+        w,
+        h,
+        rotate: settings.rotate,
+        flipX: settings.flipX,
+        flipY: settings.flipY,
+      };
     } else {
       drawStateRef.current.overlayMeta = { cx: 0, cy: 0, w: 0, h: 0, rotate: 0, flipX: false, flipY: false };
     }
@@ -511,49 +519,49 @@ export default function CustomizationPage() {
   }, [redraw]);
 
   useEffect(() => {
-  if (!containerRef.current || !canvasRef.current) return;
+    if (!containerRef.current || !canvasRef.current) return;
 
-  const el = containerRef.current;
-  const canvas = canvasRef.current;
+    const el = containerRef.current;
+    const canvas = canvasRef.current;
 
-  let rafId = 0;
-  let lastW = 0;
-  let lastH = 0;
+    let rafId = 0;
+    let lastW = 0;
+    let lastH = 0;
 
-  const applySize = (w, h) => {
-    const dpr = window.devicePixelRatio || 1;
+    const applySize = (w, h) => {
+      const dpr = window.devicePixelRatio || 1;
 
-    if (w === lastW && h === lastH) return;
-    lastW = w;
-    lastH = h;
+      if (w === lastW && h === lastH) return;
+      lastW = w;
+      lastH = h;
 
-    canvas.width = Math.floor(w * dpr);
-    canvas.height = Math.floor(h * dpr);
-    canvas.style.width = `${w}px`;
-    canvas.style.height = `${h}px`;
-  };
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+    };
 
-  const ro = new ResizeObserver((entries) => {
-    const entry = entries[0];
-    if (!entry) return;
+    const ro = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
 
-    const w = Math.max(320, Math.floor(entry.contentRect.width));
-    const h = Math.max(380, Math.floor(entry.contentRect.height));
+      const w = Math.max(320, Math.floor(entry.contentRect.width));
+      const h = Math.max(380, Math.floor(entry.contentRect.height));
 
-    cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(() => {
-      applySize(w, h);
-      redraw();
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        applySize(w, h);
+        redraw();
+      });
     });
-  });
 
-  ro.observe(el);
+    ro.observe(el);
 
-  return () => {
-    cancelAnimationFrame(rafId);
-    ro.disconnect();
-  };
-}, [redraw]);
+    return () => {
+      cancelAnimationFrame(rafId);
+      ro.disconnect();
+    };
+  }, [redraw]);
 
   useEffect(() => {
     setSelectedVariantIndex((idx) => clamp(idx, 0, selectedProduct.variants.length - 1));
@@ -695,7 +703,7 @@ export default function CustomizationPage() {
       dragRef.current.pointerId = e.pointerId;
       try {
         canvas.setPointerCapture?.(e.pointerId);
-      } catch {}
+      } catch { }
     }
   };
 
@@ -731,7 +739,7 @@ export default function CustomizationPage() {
     if (canvas && dragRef.current.pointerId != null) {
       try {
         canvas.releasePointerCapture?.(dragRef.current.pointerId);
-      } catch {}
+      } catch { }
     }
     dragRef.current.pointerId = null;
 
@@ -761,19 +769,22 @@ export default function CustomizationPage() {
     setToast("Aligned");
   };
 
-  const nudge = (dx, dy) => {
-    const baseRect = drawStateRef.current.baseRect;
-    setSettings((s) => {
-      const step = Math.max(0.5, s.fineStep / 2);
-      const next = {
-        ...s,
-        snapCenter: false,
-        offsetX: clamp(s.offsetX + dx * step, -50, 50),
-        offsetY: clamp(s.offsetY + dy * step, -50, 50),
-      };
-      return normalizeAfterMove(next, baseRect);
-    });
-  };
+  const nudge = useCallback(
+    (dx, dy) => {
+      const baseRect = drawStateRef.current.baseRect;
+      setSettings((s) => {
+        const step = Math.max(0.5, s.fineStep / 2);
+        const next = {
+          ...s,
+          snapCenter: false,
+          offsetX: clamp(s.offsetX + dx * step, -50, 50),
+          offsetY: clamp(s.offsetY + dy * step, -50, 50),
+        };
+        return normalizeAfterMove(next, baseRect);
+      });
+    },
+    [normalizeAfterMove]
+  );
 
   const onWheel = (e) => {
     if (!overlayDataUrl) return;
@@ -826,7 +837,7 @@ export default function CustomizationPage() {
 
     window.addEventListener("keydown", onKeys, { passive: false });
     return () => window.removeEventListener("keydown", onKeys);
-  }, [overlayDataUrl]);
+  }, [overlayDataUrl, nudge]);
 
   const exportPreview = () => {
     const canvas = canvasRef.current;
@@ -874,10 +885,7 @@ export default function CustomizationPage() {
         </div>
 
         <div className="customization-shell">
-          <div
-            className="panel left-panel"
-            style={{ overflowY: "auto", maxHeight: "calc(100vh - 140px)" }}
-          >
+          <div className="panel left-panel" style={{ overflowY: "auto", maxHeight: "calc(100vh - 140px)" }}>
             <div className="panel-block">
               <div className="panel-title">Products</div>
               <div className="product-list">
@@ -955,9 +963,7 @@ export default function CustomizationPage() {
             <div className="preview-card">
               <div className="preview-header">
                 <div className="preview-title">Live Preview</div>
-                <div className="preview-sub">
-                  Drag logo, wheel to resize, Shift+wheel rotate, Alt+wheel opacity, double click to center.
-                </div>
+                <div className="preview-sub">Drag logo, wheel to resize, Shift+wheel rotate, Alt+wheel opacity, double click to center.</div>
               </div>
 
               <div className="preview-stage" ref={containerRef}>
@@ -1069,15 +1075,12 @@ export default function CustomizationPage() {
                   {loadingBgRemoval
                     ? "Processing image..."
                     : overlayDataUrl
-                    ? "Logo loaded. Drag, scroll to size, Shift+scroll to rotate."
-                    : "No logo selected"}
+                      ? "Logo loaded. Drag, scroll to size, Shift+scroll to rotate."
+                      : "No logo selected"}
                 </div>
               </div>
 
-              <div
-                className="center-actions"
-                style={{ display: "flex", gap: 10, flexWrap: "nowrap", overflowX: "auto", justifyContent: "center" }}
-              >
+              <div className="center-actions" style={{ display: "flex", gap: 10, flexWrap: "nowrap", overflowX: "auto", justifyContent: "center" }}>
                 <button className="btn outline small" type="button" onClick={() => setSetting("showGrid", !settings.showGrid)}>
                   {settings.showGrid ? "Hide Grid" : "Show Grid"}
                 </button>
@@ -1107,36 +1110,18 @@ export default function CustomizationPage() {
             </div>
           </div>
 
-          <div
-            className="panel right-panel"
-            style={{ overflowY: "auto", maxHeight: "calc(100vh - 140px)" }}
-          >
+          <div className="panel right-panel" style={{ overflowY: "auto", maxHeight: "calc(100vh - 140px)" }}>
             <div className="panel-block">
               <div className="panel-title">Controls</div>
 
               <div className="toggle-row" style={{ display: "flex", gap: 8, flexWrap: "nowrap", overflowX: "auto" }}>
-                <button
-                  className={`chip ${settings.flipX ? "active" : ""}`}
-                  type="button"
-                  onClick={() => setSetting("flipX", !settings.flipX)}
-                  disabled={!overlayDataUrl}
-                >
+                <button className={`chip ${settings.flipX ? "active" : ""}`} type="button" onClick={() => setSetting("flipX", !settings.flipX)} disabled={!overlayDataUrl}>
                   Flip X
                 </button>
-                <button
-                  className={`chip ${settings.flipY ? "active" : ""}`}
-                  type="button"
-                  onClick={() => setSetting("flipY", !settings.flipY)}
-                  disabled={!overlayDataUrl}
-                >
+                <button className={`chip ${settings.flipY ? "active" : ""}`} type="button" onClick={() => setSetting("flipY", !settings.flipY)} disabled={!overlayDataUrl}>
                   Flip Y
                 </button>
-                <button
-                  className={`chip ${settings.snapCenter ? "active" : ""}`}
-                  type="button"
-                  onClick={() => setSetting("snapCenter", !settings.snapCenter)}
-                  disabled={!overlayDataUrl}
-                >
+                <button className={`chip ${settings.snapCenter ? "active" : ""}`} type="button" onClick={() => setSetting("snapCenter", !settings.snapCenter)} disabled={!overlayDataUrl}>
                   Snap Center
                 </button>
               </div>
@@ -1146,15 +1131,7 @@ export default function CustomizationPage() {
                   <span>Size</span>
                   <span className="control-val">{settings.scale.toFixed(2)}x</span>
                 </div>
-                <input
-                  type="range"
-                  min="0.25"
-                  max="3.2"
-                  step="0.01"
-                  value={settings.scale}
-                  onChange={(e) => setSetting("scale", Number(e.target.value))}
-                  disabled={!overlayDataUrl}
-                />
+                <input type="range" min="0.25" max="3.2" step="0.01" value={settings.scale} onChange={(e) => setSetting("scale", Number(e.target.value))} disabled={!overlayDataUrl} />
               </div>
 
               <div className="control">
@@ -1162,15 +1139,7 @@ export default function CustomizationPage() {
                   <span>Rotate</span>
                   <span className="control-val">{Math.round(settings.rotate)}°</span>
                 </div>
-                <input
-                  type="range"
-                  min="-180"
-                  max="180"
-                  step="1"
-                  value={settings.rotate}
-                  onChange={(e) => setSetting("rotate", Number(e.target.value))}
-                  disabled={!overlayDataUrl}
-                />
+                <input type="range" min="-180" max="180" step="1" value={settings.rotate} onChange={(e) => setSetting("rotate", Number(e.target.value))} disabled={!overlayDataUrl} />
               </div>
 
               <div className="control">
@@ -1178,15 +1147,7 @@ export default function CustomizationPage() {
                   <span>Opacity</span>
                   <span className="control-val">{Math.round(settings.opacity * 100)}%</span>
                 </div>
-                <input
-                  type="range"
-                  min="0.05"
-                  max="1"
-                  step="0.01"
-                  value={settings.opacity}
-                  onChange={(e) => setSetting("opacity", Number(e.target.value))}
-                  disabled={!overlayDataUrl}
-                />
+                <input type="range" min="0.05" max="1" step="0.01" value={settings.opacity} onChange={(e) => setSetting("opacity", Number(e.target.value))} disabled={!overlayDataUrl} />
               </div>
 
               <div className="control">
@@ -1194,16 +1155,9 @@ export default function CustomizationPage() {
                   <span>Move X</span>
                   <span className="control-val">{Math.round(settings.offsetX)}%</span>
                 </div>
-                <input
-                  type="range"
-                  min="-50"
-                  max="50"
-                  step="1"
-                  value={settings.offsetX}
-                  onChange={(e) => setSetting("offsetX", Number(e.target.value))}
-                  disabled={!overlayDataUrl}
-                />
+                <input type="range" min="-50" max="50" step="1" value={settings.offsetX} onChange={(e) => setSetting("offsetX", Number(e.target.value))} disabled={!overlayDataUrl} />
               </div>
+
 
               <div className="control">
                 <div className="control-head">
